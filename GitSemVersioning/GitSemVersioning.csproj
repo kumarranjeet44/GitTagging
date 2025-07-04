@@ -9,5 +9,8 @@
 	<Version>$(GitVersion_NuGetVersion)</Version>
 	<PackageVersion>$(GitVersion_NuGetVersion)</PackageVersion>
   </PropertyGroup>
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
 
 </Project>
