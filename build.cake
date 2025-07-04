@@ -55,8 +55,9 @@ Task("Build").IsDependentOn("Restore").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
-        Configuration = configuration,
-		OutputDirectory = ouputDir
+        Configuration = configuration
+        // Remove OutputDirectory when building a solution
+        // OutputDirectory = ouputDir
     });
 
 });
