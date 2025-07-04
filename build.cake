@@ -139,6 +139,21 @@ Task("SetVersion")
        // Optionally, print the file content after
        Information("After update:");
        Information(System.IO.File.ReadAllText(assemblyInfoPath));
+
+       // --- Add these lines to commit and push the change ---
+       StartProcess("git", new ProcessSettings {
+           Arguments = $"add \"{assemblyInfoPath}\""
+       });
+       StartProcess("git", new ProcessSettings {
+           Arguments = $"commit -m \"Update AssemblyInfo.cs version [CI skip]\"",
+           RedirectStandardOutput = true,
+           RedirectStandardError = true
+       });
+       StartProcess("git", new ProcessSettings {
+           Arguments = "push",
+           RedirectStandardOutput = true,
+           RedirectStandardError = true
+       });
    });
 
 Task("Tagmaster").Does(() => {
