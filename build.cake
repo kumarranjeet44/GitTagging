@@ -115,7 +115,7 @@ Task("Test").ContinueOnError().Does(() =>
 
 Task("SetVersion")
    .Does(() => {
-       var assemblyInfoPath = "./AssemblyInfo.cs";
+       var assemblyInfoPath = "./GitSemVersioning/AssemblyInfo.cs";
        if (!System.IO.File.Exists(assemblyInfoPath))
        {
            Error($"File not found: {assemblyInfoPath}");
