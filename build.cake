@@ -55,8 +55,9 @@ Task("Build").IsDependentOn("Restore").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
-        Configuration = configuration,
-		OutputDirectory = ouputDir
+        Configuration = configuration
+        // Remove OutputDirectory when building a solution
+        // OutputDirectory = ouputDir
     });
 
 });
@@ -112,6 +113,49 @@ Task("Test").ContinueOnError().Does(() =>
 
 });
 
+Task("SetVersion")
+   .Does(() => {
+       var assemblyInfoPath = "./GitSemVersioning/AssemblyInfo.cs";
+       if (!System.IO.File.Exists(assemblyInfoPath))
+       {
+           Error($"File not found: {assemblyInfoPath}");
+           return;
+       }
+       Information($"Updating version in {assemblyInfoPath}");
+
+       // Optionally, print the file content before
+       Information("Before update:");
+       Information(System.IO.File.ReadAllText(assemblyInfoPath));
+
+       var versionPattern = "(?<=AssemblyVersion\\(\")(.+?)(?=\"\\))";
+       var fileVersionPattern = "(?<=AssemblyFileVersion\\(\")(.+?)(?=\"\\))";
+
+       var versionResult = ReplaceRegexInFiles(assemblyInfoPath, versionPattern, gitVersion.AssemblySemFileVer);
+       var fileVersionResult = ReplaceRegexInFiles(assemblyInfoPath, fileVersionPattern, gitVersion.AssemblySemFileVer);
+
+       Information($"AssemblyVersion updated: {versionResult}");
+       Information($"AssemblyFileVersion updated: {fileVersionResult}");
+
+       // Optionally, print the file content after
+       Information("After update:");
+       Information(System.IO.File.ReadAllText(assemblyInfoPath));
+
+       // --- Add these lines to commit and push the change ---
+       StartProcess("git", new ProcessSettings {
+           Arguments = $"add \"{assemblyInfoPath}\""
+       });
+       StartProcess("git", new ProcessSettings {
+           Arguments = $"commit -m \"Update AssemblyInfo.cs version [CI skip]\"",
+           RedirectStandardOutput = true,
+           RedirectStandardError = true
+       });
+       StartProcess("git", new ProcessSettings {
+           Arguments = "push",
+           RedirectStandardOutput = true,
+           RedirectStandardError = true
+       });
+   });
+
 Task("Tagmaster").Does(() => {
     //Sanity check
     var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
@@ -122,7 +166,8 @@ Task("Tagmaster").Does(() => {
     }
     Information("Task is running by automation pipeline.");
     Information("Running inside GitHub Actions.");
-    Information("GitVersion details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
+    Information("MajorMinorPatch details: {0}", JsonConvert.SerializeObject(gitVersion.MajorMinorPatch, Formatting.Indented));
+    Information("AssemblySemFileVer details: {0}", JsonConvert.SerializeObject(gitVersion.AssemblySemFileVer, Formatting.Indented));
 
     //List and check existing tags
     Information("Version (401 BL Application): {0}", completeVersionForWix); 
@@ -208,6 +253,7 @@ Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
-    .IsDependentOn("Tagmaster");
+    .IsDependentOn("Tagmaster")
+    .IsDependentOn("SetVersion");
 
 RunTarget(target);
