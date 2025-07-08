@@ -1,0 +1,23 @@
+# List all tags
+git tag
+
+# Create a lightweight tag
+git tag v1.2.3
+
+# Create an annotated tag (recommended for releases)
+git tag -a v1.2.3 -m "Release version 1.2.3"
+
+# Create a signed tag (requires GPG setup)
+git tag -s v1.2.3 -m "Release version 1.2.3"
+
+# Push a specific tag to remote
+git push origin v1.2.3
+
+# Push all tags to remote
+git push --tags
+
+# Delete a local tag
+git tag -d v1.2.3
+
+# Delete a remote tag
+git push --delete origin v1.2.3

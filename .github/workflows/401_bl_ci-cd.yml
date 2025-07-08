@@ -20,7 +20,7 @@ env:
 jobs:
   Build-401-BL-Continuous-Integration:
     runs-on: self-hosted
-    if: true # set if condition to false to skip the current job, test 02
+    if: true # set if condition to false to skip the current job, test 09
     defaults:
       run:
         shell: cmd
