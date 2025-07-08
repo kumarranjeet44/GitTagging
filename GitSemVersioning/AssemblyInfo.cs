@@ -31,7 +31,8 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
-// [assembly: AssemblyVersion("2.2.0.2")]
-[assembly: AssemblyVersion("2.2.0.2")]
-[assembly: AssemblyFileVersion("2.2.0.2")]
+
+// [assembly: AssemblyVersion("2.3.0.15")]
+[assembly: AssemblyVersion("2.3.0.15")]
+[assembly: AssemblyFileVersion("2.3.0.15")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Honeywell.UOP.TrayDesign.Win229.TestHarness")]
