@@ -4,6 +4,22 @@ mode: ContinuousDeployment
 branches:
   master:
     mode: ContinuousDelivery
+  develop:
+    mode: ContinuousDelivery
+    label: alpha
+    increment: Minor
+    prevent-increment:
+      when-current-commit-tagged: false
+    track-merge-target: true
+    track-merge-message: true
+    regex: ^dev(elop)?(ment)?$
+    source-branches:
+    - main
+    is-source-branch-for: []
+    tracks-release-branches: true
+    is-release-branch: false
+    is-main-branch: false
+    pre-release-weight: 0    
   bugfix:
     tag: useBranchName
     increment: Inherit
