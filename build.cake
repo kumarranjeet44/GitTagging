@@ -254,7 +254,5 @@ Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
-    .IsDependentOn("Tagmaster")
-    .IsDependentOn("SetVersion");
-
+    .IsDependentOn("Tagmaster");
 RunTarget(target);
