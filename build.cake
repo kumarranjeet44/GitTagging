@@ -86,6 +86,24 @@ Task("UpdateWebToolVersion")
     System.IO.File.WriteAllText(jsonPath, updatedJson);
 
     Information("WebToolVersion updated to: " + gitProjectVersionNumber);
+
+           // Optionally, print the file content after
+       Information("After update:");
+       Information(System.IO.File.ReadAllText(jsonPath));
+       // --- Add these lines to commit and push the changed assembly file from local host runner back to origin repo ---
+       StartProcess("git", new ProcessSettings {
+           Arguments = $"add \"{jsonPath}\""
+       });
+       StartProcess("git", new ProcessSettings {
+           Arguments = $"commit -m \"Update appsettings.Development.json version [CI skip]\"",
+           RedirectStandardOutput = true,
+           RedirectStandardError = true
+       });
+       StartProcess("git", new ProcessSettings {
+           Arguments = "push",
+           RedirectStandardOutput = true,
+           RedirectStandardError = true
+       });
 });
 
 
