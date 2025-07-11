@@ -79,7 +79,13 @@ Task("UpdateWebToolVersion")
     dynamic jsonObj = JsonConvert.DeserializeObject(jsonContent);
 
     // Update the WebToolVersion property
-    jsonObj.WebToolVersion = gitProjectVersionNumber.ToString();
+    jsonObj.WebToolVersion = gitVersion.BranchName == "master"
+        ? gitProjectVersionNumber.ToString()
+        : gitProjectVersionNumber.ToString() + " " +
+        (!string.IsNullOrEmpty(gitVersion.PreReleaseLabel)
+            ? char.ToUpper(gitVersion.PreReleaseLabel[0]) + gitVersion.PreReleaseLabel.Substring(1)
+            : "");  
+
 
     // Write back to file
     var updatedJson = JsonConvert.SerializeObject(jsonObj, Formatting.Indented);
