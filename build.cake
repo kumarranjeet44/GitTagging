@@ -81,10 +81,10 @@ Task("UpdateWebToolVersion")
     // Update the WebToolVersion property
     jsonObj.WebToolVersion = gitVersion.BranchName == "master"
         ? gitProjectVersionNumber.ToString()
-        : gitProjectVersionNumber.ToString() + " " +
-        (!string.IsNullOrEmpty(gitVersion.PreReleaseLabel)
-            ? char.ToUpper(gitVersion.PreReleaseLabel[0]) + gitVersion.PreReleaseLabel.Substring(1)
-            : "");  
+        : (!string.IsNullOrEmpty(gitVersion.PreReleaseLabel)
+            ? char.ToUpper(gitVersion.PreReleaseLabel[0]) + gitVersion.PreReleaseLabel.Substring(1) + " "
+            : "")
+        + completeVersionForAssemblyInfo.ToString();
 
 
     // Write back to file
