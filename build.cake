@@ -266,6 +266,7 @@ Task("full")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
     .IsDependentOn("Tagmaster")
-    .IsDependentOn("SetVersion");
+    .IsDependentOn("SetVersion")
+    .IsDependentOn("UpdateWebToolVersion");
 
 RunTarget(target);
