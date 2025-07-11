@@ -8,6 +8,7 @@
 #addin "nuget:?package=Newtonsoft.Json&version=9.0.1&prerelease"
 #tool "nuget:?package=coverlet.console&version=3.1.2"
 #tool "nuget:?package=Microsoft.CodeCoverage&version=16.9.4"
+#addin "nuget:?package=Newtonsoft.Json&version=13.0.1"
 using Cake.Common.Tools.GitVersion;
 using Newtonsoft.Json; 
 using System.Net.Http;
@@ -51,16 +52,42 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").Does(() => 
+Task("Build").IsDependentOn("Restore").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
-        Configuration = configuration
-        // Remove OutputDirectory when building a solution
-        // OutputDirectory = ouputDir
+        Configuration = configuration,
+        OutputDirectory = ouputDir
     });
 
 });
+
+Task("UpdateWebToolVersion")
+    .Does(() =>
+{
+    var jsonPath = "./GitSemVersioning/appsettings.Development.json";
+    if (!System.IO.File.Exists(jsonPath))
+    {
+        Error($"File not found: {jsonPath}");
+        return;
+    }
+
+    Information($"Updating WebToolVersion in {jsonPath}");
+
+    // Read and parse JSON
+    var jsonContent = System.IO.File.ReadAllText(jsonPath);
+    dynamic jsonObj = JsonConvert.DeserializeObject(jsonContent);
+
+    // Update the WebToolVersion property
+    jsonObj.WebToolVersion = gitProjectVersionNumber.ToString();
+
+    // Write back to file
+    var updatedJson = JsonConvert.SerializeObject(jsonObj, Formatting.Indented);
+    System.IO.File.WriteAllText(jsonPath, updatedJson);
+
+    Information("WebToolVersion updated to: " + gitProjectVersionNumber);
+});
+
 
 // Note: ContinueOnError for test Task to allow Bamboo capture TestResults produced and halt pipeline from there.
 
@@ -115,7 +142,7 @@ Task("Test").ContinueOnError().Does(() =>
 
 Task("SetVersion")
    .Does(() => {
-       var assemblyInfoPath = "./GitSemVersioning/AssemblyInfo.cs";
+       var assemblyInfoPath = "./AssemblyInfo.cs";
        if (!System.IO.File.Exists(assemblyInfoPath))
        {
            Error($"File not found: {assemblyInfoPath}");
@@ -139,21 +166,6 @@ Task("SetVersion")
        // Optionally, print the file content after
        Information("After update:");
        Information(System.IO.File.ReadAllText(assemblyInfoPath));
-
-       // --- Add these lines to commit and push the change ---
-       StartProcess("git", new ProcessSettings {
-           Arguments = $"add \"{assemblyInfoPath}\""
-       });
-       StartProcess("git", new ProcessSettings {
-           Arguments = $"commit -m \"Update AssemblyInfo.cs version [CI skip]\"",
-           RedirectStandardOutput = true,
-           RedirectStandardError = true
-       });
-       StartProcess("git", new ProcessSettings {
-           Arguments = "push",
-           RedirectStandardOutput = true,
-           RedirectStandardError = true
-       });
    });
 
 Task("Tagmaster").Does(() => {
@@ -164,12 +176,11 @@ Task("Tagmaster").Does(() => {
         Information("Task is not running by automation pipeline, skip.");
         return;
     }
-
     Information("Task is running by automation pipeline.");
     Information("Running inside GitHub Actions.");
     Information("MajorMinorPatch details: {0}", JsonConvert.SerializeObject(gitVersion.MajorMinorPatch, Formatting.Indented));
     Information("AssemblySemFileVer details: {0}", JsonConvert.SerializeObject(gitVersion.AssemblySemFileVer, Formatting.Indented));
-    Information("GitVersion details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
+
     //List and check existing tags
     Information("Version (401 BL Application): {0}", completeVersionForWix); 
     Information("BranchName: {0}", gitVersion.BranchName);
@@ -254,5 +265,7 @@ Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
-    .IsDependentOn("Tagmaster");
+    .IsDependentOn("Tagmaster")
+    .IsDependentOn("SetVersion");
+
 RunTarget(target);
