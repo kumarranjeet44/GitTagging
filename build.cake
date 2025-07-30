@@ -44,6 +44,9 @@ var assemblyInfo = ParseAssemblyInfo("GitSemVersioning/AssemblyInfo.cs");
 var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
 var MSDAssemblyVersion_unstable = assemblyInfo.AssemblyInformationalVersion;
 
+public string completeVersionForAssemblyInfo = assemblyInfo.AssemblyVersion;
+public string completeVersionForWix = assemblyInfo.AssemblyVersion;
+
 Task("Clean").Does(() => {
 	CleanDirectories("./artifact");
     CleanDirectories("./TestResults");
