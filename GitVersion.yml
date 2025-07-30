@@ -6,7 +6,7 @@ branches:
   master:
     mode: ContinuousDelivery
   develop:
-    tag: alpharkye
+    tag: ranjeet
     increment: inherit
     prevent-increment-of-merged-branch-version: false
     track-merge-target: false
