@@ -30,6 +30,7 @@ List<string> allProjectAssemblyInfoPath = new List<string>();
 var gitVersion = GitVersion(new GitVersionSettings {});
 var githubBuildNumber = gitVersion.CommitsSinceVersionSource;
 var gitProjectVersionNumber = gitVersion.MajorMinorPatch;
+var projectVersionNumber = gitVersion.MajorMinorPatch;
 public string completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
 public string completeVersionForWix = gitVersion.MajorMinorPatch;
 public string completeVersionForAssemblyInfo_unstable = string.Concat(gitVersion.MajorMinorPatch,".",githubBuildNumber);
