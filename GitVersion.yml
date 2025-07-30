@@ -1,70 +1,27 @@
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-format: '{Major}.{Minor}.{Patch}.{CommitsSinceVersionSource}'
 mode: ContinuousDeployment
-#next-version: 3.0.0 -- it will be used to set higher version than current one, if we set lower version than current one, it will not work
 branches:
   master:
     mode: ContinuousDelivery
-  develop:
-    tag: ranjeet
-    increment: Minor
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: false
-    regex: ^develop[/-]
-    source-branches:
-    - master
-    tracks-release-branches: false
-    is-release-branch: false
-    is-mainline: false
-    pre-release-weight: 30000    
   bugfix:
-    tag: alpha
-    increment: Patch
+    tag: useBranchName
+    increment: Inherit
     prevent-increment-of-merged-branch-version: false
     track-merge-target: false
     regex: ^bugfix(es)?[/-]
     source-branches:
     - develop
-    tracks-release-branches: false
-    is-release-branch: false
-    is-mainline: false
-    pre-release-weight: 30000
-  feature:
-    tag: alpha
-    increment: Minor
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: true
-    regex: ^feature[/-]
-    source-branches:
-    - develop
-    tracks-release-branches: false
-    is-release-branch: false
-    is-mainline: false
-    pre-release-weight: 30000
-  hostfix:
-    tag: hostfix
-    increment: Patch
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: true
-    regex: ^hostfix[/-]
-    source-branches:
     - master
+    - release
+    - feature
+    - support
+    - hotfix
     tracks-release-branches: false
     is-release-branch: false
     is-mainline: false
     pre-release-weight: 30000
-  release:
-    tag: beta
-    increment: Minor
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: true
-    regex: ^release[/-]
-    source-branches:
-    - develop
-    tracks-release-branches: false
-    is-release-branch: true
-    is-mainline: false
-    pre-release-weight: 30000            
 ignore:
+
   sha: []
 merge-message-formats: {}
