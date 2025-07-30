@@ -31,6 +31,8 @@ var githubBuildNumber = gitVersion.CommitsSinceVersionSource;
 var gitProjectVersionNumber = gitVersion.MajorMinorPatch;
 public string completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
 public string completeVersionForWix = gitVersion.MajorMinorPatch;
+public string completeVersionForAssemblyInfo_unstable = string.Concat(gitVersion.MajorMinorPatch,".",githubBuildNumber);
+public string completeVersionForWix_unstable = string.Concat(gitVersion.MajorMinorPatch,".",githubBuildNumber);
 
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB"); 
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB"); 
