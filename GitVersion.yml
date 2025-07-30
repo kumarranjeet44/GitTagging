@@ -7,7 +7,7 @@ branches:
     mode: ContinuousDelivery
   develop:
     tag: ranjeet
-    increment: inherit
+    increment: Minor
     prevent-increment-of-merged-branch-version: false
     track-merge-target: false
     regex: ^develop[/-]
