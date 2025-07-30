@@ -29,8 +29,8 @@ var ouputDir = Directory("./obj");
 var gitVersion = GitVersion(new GitVersionSettings {});
 var githubBuildNumber = gitVersion.CommitsSinceVersionSource;
 var gitProjectVersionNumber = gitVersion.MajorMinorPatch;
-public string completeVersionForAssemblyInfo = string.Concat(gitProjectVersionNumber,".",githubBuildNumber);
-public string completeVersionForWix = string.Concat(gitProjectVersionNumber,".",githubBuildNumber);
+public string completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
+public string completeVersionForWix = gitVersion.MajorMinorPatch;
 
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB"); 
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB"); 
@@ -192,6 +192,37 @@ Task("SetVersion")
        Information(System.IO.File.ReadAllText(assemblyInfoPath));
    });
 
+Task("SetVersionInAssemblyInWix").Does(() => {
+    Information($"Last MSD version to be search as: {MSDAssemblyVersion} and replace with: {completeVersionForAssemblyInfo}");
+    Information($"Last MSD version to be search as: {MSDAssemblyVersion_unstable} and replace with: {completeVersionForAssemblyInfo_unstable}");
+    GetAllAssemblyinfoPath();
+    foreach (var path in allProjectAssemblyInfoPath)
+    {
+        ReplaceVersionInWix(path, MSDAssemblyVersion, completeVersionForAssemblyInfo);
+        ReplaceVersionInWix(path, MSDAssemblyVersion_unstable, completeVersionForAssemblyInfo_unstable);
+    }
+});
+// Replaces version based on bambooBranch version
+public void ReplaceVersionInWix(string fileName, string searchWith, string replaceWith)
+{
+    var configData = System.IO.File.ReadAllText(fileName, Encoding.UTF8);
+    configData = Regex.Replace(configData, searchWith, replaceWith);
+    System.IO.File.WriteAllText(fileName, configData, Encoding.UTF8);
+}
+//Get all project Assembly info Path
+public void GetAllAssemblyinfoPath()
+{
+ // get the list of directories and subdirectories
+  var files = System.IO.Directory.EnumerateFiles("GitSemVersioning", "AssemblyInfo.cs", SearchOption.AllDirectories);
+  foreach (var path in files)
+  {
+   if(!path.Contains("Test"))
+   {
+      allProjectAssemblyInfoPath.Add(path);
+   }                
+  }         
+}   
+
 Task("Tagmaster").Does(() => {
     //Sanity check
     var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
@@ -290,7 +321,7 @@ Task("full")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
     .IsDependentOn("Tagmaster")
-    .IsDependentOn("SetVersion")
-    .IsDependentOn("UpdateWebToolVersion");
+    .IsDependentOn("SetVersion");
+    //.IsDependentOn("UpdateWebToolVersion");
 
 RunTarget(target);

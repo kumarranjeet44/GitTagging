@@ -35,4 +35,4 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("2.3.0.2")]
 [assembly: AssemblyVersion("2.3.0.2")]
 [assembly: AssemblyFileVersion("2.3.0.2")]
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Honeywell.UOP.TrayDesign.Win229.TestHarness")]
+[assembly: AssemblyInformationalVersion("4.3.0-feature.58")]
