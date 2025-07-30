@@ -61,7 +61,7 @@ else if (gitVersion.BranchName == "master") {
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB"); 
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB"); 
 
-// Removed artifactory repo variables
+// Removed artifactory repo variables.............
 var zipPath = new DirectoryPath("./artifact");
 
 var EXG401UIAssemblyVersion = completeVersionForWix;
@@ -223,8 +223,8 @@ Task("SetVersion")
    });
 
 Task("SetVersionInAssemblyInWix").Does(() => {
-    Information($"Last MSD version to be search as: {MSDAssemblyVersion} and replace with: {completeVersionForAssemblyInfo}");
-    Information($"Last MSD version to be search as: {MSDAssemblyVersion_unstable} and replace with: {completeVersionForAssemblyInfo_unstable}");
+    //Information($"Last MSD version to be search as: {MSDAssemblyVersion} and replace with: {completeVersionForAssemblyInfo}");
+    //Information($"Last MSD version to be search as: {MSDAssemblyVersion_unstable} and replace with: {completeVersionForAssemblyInfo_unstable}");
     GetAllAssemblyinfoPath();
     foreach (var path in allProjectAssemblyInfoPath)
     {
@@ -254,6 +254,7 @@ public void GetAllAssemblyinfoPath()
 }   
 
 Task("Tagmaster").Does(() => {
+    Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
     //Sanity check
     var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
     if(!isGitHubActions)
@@ -261,13 +262,8 @@ Task("Tagmaster").Does(() => {
         Information("Task is not running by automation pipeline, skip.");
         return;
     }
-    Information("Task is running by automation pipeline.");
-    Information("Running inside GitHub Actions.");
-    Information("MajorMinorPatch details: {0}", JsonConvert.SerializeObject(gitVersion.MajorMinorPatch, Formatting.Indented));
-    Information("AssemblySemFileVer details: {0}", JsonConvert.SerializeObject(gitVersion.AssemblySemFileVer, Formatting.Indented));
 
     //List and check existing tags
-    Information("Version (401 BL Application): {0}", completeVersionForWix); 
     Information("BranchName: {0}", gitVersion.BranchName);
     Information("Previous Releases:");
     var currentTags = GitTags(".");

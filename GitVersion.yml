@@ -1,6 +1,7 @@
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-format: '{Major}.{Minor}.{Patch}.{CommitsSinceVersionSource}'
 mode: ContinuousDeployment
+#next-version: 3.0.0 -- it will be used to set higher version than current one, if we set lower version than current one, it will not work
 branches:
   master:
     mode: ContinuousDelivery
