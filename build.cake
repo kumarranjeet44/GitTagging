@@ -265,13 +265,8 @@ Task("Tagmaster").Does(() => {
         Information("Task is not running by automation pipeline, skip.");
         return;
     }
-    Information("Task is running by automation pipeline.");
-    Information("Running inside GitHub Actions.");
-    Information("MajorMinorPatch details: {0}", JsonConvert.SerializeObject(gitVersion.MajorMinorPatch, Formatting.Indented));
-    Information("AssemblySemFileVer details: {0}", JsonConvert.SerializeObject(gitVersion.AssemblySemFileVer, Formatting.Indented));
 
     //List and check existing tags
-    Information("Version (401 BL Application): {0}", completeVersionForWix); 
     Information("BranchName: {0}", gitVersion.BranchName);
     Information("Previous Releases:");
     var currentTags = GitTags(".");
