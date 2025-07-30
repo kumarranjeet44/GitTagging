@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading;
 using Cake.Core.Text;
+using System.Text.RegularExpressions;
 
 public const string PROVIDED_BY_GITHUB = "PROVIDED_BY_GITHUB";
 
