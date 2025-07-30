@@ -5,6 +5,23 @@ mode: ContinuousDeployment
 branches:
   master:
     mode: ContinuousDelivery
+  develop:
+    tag: ranjeet
+    increment: Inherit
+    prevent-increment-of-merged-branch-version: false
+    track-merge-target: false
+    regex: ^bugfix(es)?[/-]
+    source-branches:
+    - develop
+    - master
+    - release
+    - feature
+    - support
+    - hotfix
+    tracks-release-branches: false
+    is-release-branch: false
+    is-mainline: false
+    pre-release-weight: 30000    
   bugfix:
     tag: useBranchName
     increment: Inherit
