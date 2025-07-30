@@ -34,9 +34,9 @@ var gitProjectVersionNumber = gitVersion.MajorMinorPatch;
 var projectVersionNumber = gitVersion.MajorMinorPatch;
 public string completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
 public string completeVersionForWix = gitVersion.MajorMinorPatch;
-public string completeVersionForAssemblyInfo_unstable = string.Concat(gitVersion.MajorMinorPatch,".",githubBuildNumber);
-public string completeVersionForWix_unstable = string.Concat(gitVersion.MajorMinorPatch, ".", githubBuildNumber);
-
+public string completeVersionForAssemblyInfo_unstable = "";
+public string completeVersionForWix_unstable = "";
+//string.Concat(gitVersion.MajorMinorPatch, ".", githubBuildNumber)
 if (gitVersion.BranchName == "develop") {
     completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-alpha.", githubBuildNumber);
     completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-alpha.", githubBuildNumber);
@@ -229,10 +229,7 @@ Task("SetVersionInAssemblyInWix").Does(() => {
     foreach (var path in allProjectAssemblyInfoPath)
     {
         ReplaceVersionInWix(path, MSDAssemblyVersion, completeVersionForAssemblyInfo);
-        if(gitVersion.BranchName != "master")
-        {
-            ReplaceVersionInWix(path, MSDAssemblyVersion_unstable, completeVersionForAssemblyInfo_unstable);
-        }
+        ReplaceVersionInWix(path, MSDAssemblyVersion_unstable, completeVersionForAssemblyInfo_unstable);
     }
 });
 // Replaces version based on bambooBranch version
