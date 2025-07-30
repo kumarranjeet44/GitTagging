@@ -223,8 +223,8 @@ Task("SetVersion")
    });
 
 Task("SetVersionInAssemblyInWix").Does(() => {
-    Information($"Last MSD version to be search as: {MSDAssemblyVersion} and replace with: {completeVersionForAssemblyInfo}");
-    Information($"Last MSD version to be search as: {MSDAssemblyVersion_unstable} and replace with: {completeVersionForAssemblyInfo_unstable}");
+    //Information($"Last MSD version to be search as: {MSDAssemblyVersion} and replace with: {completeVersionForAssemblyInfo}");
+    //Information($"Last MSD version to be search as: {MSDAssemblyVersion_unstable} and replace with: {completeVersionForAssemblyInfo_unstable}");
     GetAllAssemblyinfoPath();
     foreach (var path in allProjectAssemblyInfoPath)
     {
@@ -257,6 +257,7 @@ public void GetAllAssemblyinfoPath()
 }   
 
 Task("Tagmaster").Does(() => {
+    Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
     //Sanity check
     var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
     if(!isGitHubActions)
