@@ -61,7 +61,7 @@ else if (gitVersion.BranchName == "master") {
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB"); 
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB"); 
 
-// Removed artifactory repo variables
+// Removed artifactory repo variables.............
 var zipPath = new DirectoryPath("./artifact");
 
 var EXG401UIAssemblyVersion = completeVersionForWix;
