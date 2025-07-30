@@ -40,6 +40,10 @@ var zipPath = new DirectoryPath("./artifact");
 
 var EXG401UIAssemblyVersion = completeVersionForWix;
 
+var assemblyInfo = ParseAssemblyInfo("GitSemVersioning/AssemblyInfo.cs");
+var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
+var MSDAssemblyVersion_unstable = assemblyInfo.AssemblyInformationalVersion;
+
 Task("Clean").Does(() => {
 	CleanDirectories("./artifact");
     CleanDirectories("./TestResults");
@@ -321,7 +325,7 @@ Task("full")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
     .IsDependentOn("Tagmaster")
-    .IsDependentOn("SetVersion");
+    .IsDependentOn("SetVersionInAssemblyInWix");
     //.IsDependentOn("UpdateWebToolVersion");
 
 RunTarget(target);
