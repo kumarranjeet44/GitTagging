@@ -1,5 +1,6 @@
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-format: '{Major}.{Minor}.{Patch}.{CommitsSinceVersionSource}'
+next-version: 2.8.0
 mode: ContinuousDeployment
 branches:
   master:
