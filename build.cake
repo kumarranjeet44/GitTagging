@@ -23,6 +23,7 @@ var configuration = Argument("configuration", "Release");
 var testResultsDir = Directory("./TestResults");
 var buildVersion = "1.1";
 var ouputDir = Directory("./obj");
+List<string> allProjectAssemblyInfoPath = new List<string>();
 
 // Removed sonarQube and artifactory arguments
 
