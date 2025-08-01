@@ -1,15 +1,15 @@
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-format: '{Major}.{Minor}.{Patch}.{CommitsSinceVersionSource}'
 mode: ContinuousDeployment
-next-version: 5.3.14 ####
+#next-version: 5.3.14 ####
 branches:
   master:
     mode: ContinuousDelivery
-  develop:
-    mode: ContinuousDeployment
-    tag: alpha
-    increment: Patch
-    prevent-increment-of-merged-branch-version: false
+  # develop:
+  #   mode: ContinuousDeployment
+  #   tag: alpha
+  #   increment: Patch
+  #   prevent-increment-of-merged-branch-version: false
   bugfix:
     tag: useBranchName
     increment: Inherit
