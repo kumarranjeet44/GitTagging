@@ -258,41 +258,18 @@ bool IsMajorVersionUpgrade()
 {
     try
     {
-        var currentTags = GitTags(".");
-        var masterTags = currentTags.Where(tag => !tag.FriendlyName.Contains("-")).ToList(); // Filter stable tags (no pre-release)
+        var masterTags = GitTags(".").Where(tag => !tag.FriendlyName.Contains("-"));
+        if (!masterTags.Any()) return false;
         
-        if (!masterTags.Any())
-        {
-            Information("No existing master tags found. This will be the first version.");
-            return false; // No existing version, so not an upgrade
-        }
+        var latestVersion = masterTags
+            .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
+            .OrderByDescending(v => v)
+            .First();
         
-        // Get the latest master tag by version
-        var latestMasterTag = masterTags
-            .Select(tag => new { 
-                Tag = tag.FriendlyName,
-                Version = System.Version.Parse(tag.FriendlyName.TrimStart('v'))
-            })
-            .OrderByDescending(t => t.Version)
-            .FirstOrDefault();
-        
-        if (latestMasterTag == null)
-        {
-            Information("Could not parse existing master tags.");
-            return false;
-        }
-        
-        var currentMajorVersion = latestMasterTag.Version.Major;
-        var newMajorVersion = gitVersion.Major;
-        
-        Information($"Current master tag: {latestMasterTag.Tag} (Major: {currentMajorVersion})");
-        Information($"New version to be tagged: v{gitVersion.MajorMinorPatch} (Major: {newMajorVersion})");
-        
-        return newMajorVersion > currentMajorVersion;
+        return gitVersion.Major > latestVersion.Major;
     }
-    catch (Exception ex)
+    catch
     {
-        Warning($"Error checking major version upgrade: {ex.Message}");
         return false;
     }
 }
