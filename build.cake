@@ -253,8 +253,64 @@ public void GetAllAssemblyinfoPath()
   }         
 }   
 
+// Function to check if current master tag major version is less than new major version
+bool IsMajorVersionUpgrade()
+{
+    try
+    {
+        var currentTags = GitTags(".");
+        var masterTags = currentTags.Where(tag => !tag.FriendlyName.Contains("-")).ToList(); // Filter stable tags (no pre-release)
+        
+        if (!masterTags.Any())
+        {
+            Information("No existing master tags found. This will be the first version.");
+            return false; // No existing version, so not an upgrade
+        }
+        
+        // Get the latest master tag by version
+        var latestMasterTag = masterTags
+            .Select(tag => new { 
+                Tag = tag.FriendlyName,
+                Version = System.Version.Parse(tag.FriendlyName.TrimStart('v'))
+            })
+            .OrderByDescending(t => t.Version)
+            .FirstOrDefault();
+        
+        if (latestMasterTag == null)
+        {
+            Information("Could not parse existing master tags.");
+            return false;
+        }
+        
+        var currentMajorVersion = latestMasterTag.Version.Major;
+        var newMajorVersion = gitVersion.Major;
+        
+        Information($"Current master tag: {latestMasterTag.Tag} (Major: {currentMajorVersion})");
+        Information($"New version to be tagged: v{gitVersion.MajorMinorPatch} (Major: {newMajorVersion})");
+        
+        return newMajorVersion > currentMajorVersion;
+    }
+    catch (Exception ex)
+    {
+        Warning($"Error checking major version upgrade: {ex.Message}");
+        return false;
+    }
+}
+
 Task("Tagmaster").Does(() => {
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
+    
+    // Check if this is a major version upgrade
+    bool isMajorUpgrade = IsMajorVersionUpgrade();
+    Information($"Is Major Version Upgrade: {isMajorUpgrade}");
+    
+    if (isMajorUpgrade)
+    {
+        Information("🚀 MAJOR VERSION UPGRADE DETECTED!");
+        Information("This indicates breaking changes or significant new features.");
+        // Add any special handling for major version upgrades here
+    }
+    
     //Sanity check
     var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
     if(!isGitHubActions)
