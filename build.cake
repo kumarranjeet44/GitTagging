@@ -346,8 +346,8 @@ Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
-    .IsDependentOn("Tagmaster")
-    .IsDependentOn("SetVersionInAssemblyInWix");
+    .IsDependentOn("Tagmaster");
+    //.IsDependentOn("SetVersionInAssemblyInWix");
     //.IsDependentOn("UpdateWebToolVersion");
 
 RunTarget(target);
