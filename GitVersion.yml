@@ -1,7 +1,7 @@
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-format: '{Major}.{Minor}.{Patch}.{CommitsSinceVersionSource}'
 mode: ContinuousDeployment
-# next-version: 5.3.15
+next-version: 7.1.0
 branches:
   master:
     mode: ContinuousDelivery
