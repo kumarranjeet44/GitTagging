@@ -70,6 +70,46 @@ var assemblyInfo = ParseAssemblyInfo("GitSemVersioning/AssemblyInfo.cs");
 var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
 var MSDAssemblyVersion_unstable = assemblyInfo.AssemblyInformationalVersion;
 
+string globalHotfixTag = "";
+Task("CalculateHotfixTag").Does(() => {
+    if (!gitVersion.BranchName.StartsWith("hotfix/"))
+    {
+        Information("Not a hotfix branch, skipping hotfix tag calculation.");
+        return;
+    }
+        
+    var currentTags = GitTags(".");
+    string baseVersionTag = $"v{gitVersion.MajorMinorPatch}-beta.{gitVersion.CommitsSinceVersionSource}";
+    
+    // Find the next available hotfix number for this version
+    int hotfixNumber = 1;
+    string candidateTag;
+    
+    do
+    {
+        candidateTag = $"{baseVersionTag}.{hotfixNumber}";
+        
+        // Check if this tag already exists
+        if (!currentTags.Any(t => t.FriendlyName == candidateTag))
+        {
+            break; // Found an available tag
+        }
+        
+        hotfixNumber++;
+        
+        // Safety check to avoid infinite loop
+        if (hotfixNumber > 999)
+        {
+            throw new Exception($"Too many hotfix tags for version {baseVersionTag}. Maximum 999 hotfixes supported.");
+        }
+        
+    } while (true);
+    
+    globalHotfixTag = candidateTag;
+    Information($"Calculated and set global hotfix tag: {globalHotfixTag} (hotfix #{hotfixNumber})");
+});
+
+
 Task("Clean").Does(() => {
 	CleanDirectories("./artifact");
     CleanDirectories("./TestResults");
@@ -82,7 +122,7 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("CalculateHotfixTag").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
@@ -321,10 +361,13 @@ Task("Tagmaster").Does(() => {
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}";
     }
+    else if (gitVersion.BranchName == "hotfix/")
+    {
+        branchTag = globalHotfixTag;
+    }
     else if (
         gitVersion.BranchName == "develop" ||
-        gitVersion.BranchName.StartsWith("release/") ||
-        gitVersion.BranchName.StartsWith("hotfix/")
+        gitVersion.BranchName.StartsWith("release/")
     )
     {
         if (string.IsNullOrEmpty(gitVersion.PreReleaseLabel))
