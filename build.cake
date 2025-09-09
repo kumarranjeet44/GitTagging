@@ -361,7 +361,7 @@ Task("Tagmaster").Does(() => {
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}";
     }
-    else if (gitVersion.BranchName == "hotfix/")
+    else if (gitVersion.BranchName.StartsWith("release/"))
     {
         branchTag = globalHotfixTag;
     }
