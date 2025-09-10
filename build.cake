@@ -109,6 +109,131 @@ Task("CalculateHotfixTag").Does(() => {
     Information($"Calculated and set global hotfix tag: {globalHotfixTag} (hotfix #{hotfixNumber})");
 });
 
+Task("AddToHotfixMappings")
+    .WithCriteria(() => !string.IsNullOrEmpty(Argument("hotfixBranch", "")))
+    .WithCriteria(() => !string.IsNullOrEmpty(Argument("hotfixSuffix", "")))
+    .Does(() => {
+    
+    var hotfixBranch = Argument("hotfixBranch", "");
+    var hotfixSuffix = Argument("hotfixSuffix", "");
+    
+    Information($"Adding hotfix mapping: {hotfixBranch} -> {hotfixSuffix}");
+    
+    // Get current HOTFIX_MAPPINGS (this would be retrieved from repository variable in real GitHub Actions)
+    var hotfixMappingsJson = EnvironmentVariable("HOTFIX_MAPPINGS") ?? "{}";
+    var hotfixMappings = JsonConvert.DeserializeObject<Dictionary<string, string>>(hotfixMappingsJson);
+    
+    // Add or update the mapping
+    hotfixMappings[hotfixBranch] = hotfixSuffix;
+    
+    // Serialize back to JSON
+    var updatedJson = JsonConvert.SerializeObject(hotfixMappings, Formatting.None);
+    
+    Information($"Updated HOTFIX_MAPPINGS: {updatedJson}");
+    
+    // Update repository variable directly using GitHub CLI
+    var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
+    if (isGitHubActions)
+    {
+        var updateResult = StartProcess("gh", new ProcessSettings
+        {
+            Arguments = new ProcessArgumentBuilder()
+                .Append("variable")
+                .Append("set")
+                .Append("HOTFIX_MAPPINGS")
+                .Append("--body")
+                .AppendQuoted(updatedJson),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        });
+
+        if (updateResult == 0)
+        {
+            Information("Successfully updated HOTFIX_MAPPINGS repository variable");
+        }
+        else
+        {
+            Error("Failed to update HOTFIX_MAPPINGS repository variable");
+        }
+    }
+    else
+    {
+        Information("Not running in GitHub Actions - would update HOTFIX_MAPPINGS to: {0}", updatedJson);
+    }
+});
+
+Task("AddCurrentHotfixToMappings")
+    .WithCriteria(() => gitVersion.BranchName.StartsWith("hotfix/"))
+    .Does(() => {
+    
+    var hotfixBranch = gitVersion.BranchName;
+    Information($"Processing hotfix branch: {hotfixBranch}");
+    
+    // Get current HOTFIX_MAPPINGS (this would be retrieved from repository variable in real GitHub Actions)
+    var hotfixMappingsJson = EnvironmentVariable("HOTFIX_MAPPINGS") ?? "{}";
+    var hotfixMappings = JsonConvert.DeserializeObject<Dictionary<string, string>>(hotfixMappingsJson);
+    
+    Information($"Current HOTFIX_MAPPINGS: {hotfixMappingsJson}");
+    
+    // Check if this branch already has a mapping
+    if (hotfixMappings.ContainsKey(hotfixBranch))
+    {
+        Information($"Branch {hotfixBranch} already has mapping: {hotfixMappings[hotfixBranch]}");
+        return;
+    }
+    
+    // Find the next available suffix number
+    var existingSuffixes = hotfixMappings.Values.ToList();
+    int nextSuffix = 1;
+    
+    while (existingSuffixes.Contains(nextSuffix.ToString()))
+    {
+        nextSuffix++;
+        if (nextSuffix > 999) // Safety check
+        {
+            throw new Exception("Too many hotfix suffixes. Maximum 999 supported.");
+        }
+    }
+    
+    var newSuffix = nextSuffix.ToString();
+    hotfixMappings[hotfixBranch] = newSuffix;
+    
+    // Serialize back to JSON
+    var updatedJson = JsonConvert.SerializeObject(hotfixMappings, Formatting.None);
+    
+    Information($"Added new mapping: {hotfixBranch} -> {newSuffix}");
+    Information($"Updated HOTFIX_MAPPINGS: {updatedJson}");
+    
+    // Update repository variable directly using GitHub CLI
+    var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
+    if (isGitHubActions)
+    {
+        var updateResult = StartProcess("gh", new ProcessSettings
+        {
+            Arguments = new ProcessArgumentBuilder()
+                .Append("variable")
+                .Append("set")
+                .Append("HOTFIX_MAPPINGS")
+                .Append("--body")
+                .AppendQuoted(updatedJson),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        });
+
+        if (updateResult == 0)
+        {
+            Information("Successfully updated HOTFIX_MAPPINGS repository variable");
+        }
+        else
+        {
+            Error("Failed to update HOTFIX_MAPPINGS repository variable");
+        }
+    }
+    else
+    {
+        Information("Not running in GitHub Actions - would update HOTFIX_MAPPINGS to: {0}", updatedJson);
+    }
+});
 
 Task("Clean").Does(() => {
 	CleanDirectories("./artifact");
@@ -122,7 +247,7 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").IsDependentOn("Use-Hashtable").IsDependentOn("CalculateHotfixTag").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("AddCurrentHotfixToMappings").IsDependentOn("CalculateHotfixTag").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
