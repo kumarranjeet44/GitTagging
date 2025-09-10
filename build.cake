@@ -58,8 +58,9 @@ else if (gitVersion.BranchName == "master") {
     completeVersionForWix = gitVersion.MajorMinorPatch;   
 }
 
-var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB"); 
-var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB"); 
+var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB");
+var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB");
+var githubBuildNumber = Argument("githubBuildNumber", "PROVIDED_BY_GITHUB");
 
 // Removed artifactory repo variables.............
 var zipPath = new DirectoryPath("./artifact");
@@ -399,7 +400,7 @@ bool IsMajorVersionUpgrade()
 }
 
 Task("Tagmaster").Does(() => {
-    Information($"-------GitHub Run Number: {githubRunNumber}");
+    Information($"-------GitHub Run Number: {githubBuildNumber}");
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
     
     // Check if this is a major version upgrade

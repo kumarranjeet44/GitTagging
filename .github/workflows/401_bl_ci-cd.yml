@@ -34,4 +34,4 @@ jobs:
     - name: Restore CICD Tools
       run: dotnet tool restore         
     - name: Build and Tests
-      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }}
+      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubbuildNumber=${{ github.run_number }}
