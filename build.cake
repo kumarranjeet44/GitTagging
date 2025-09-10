@@ -109,135 +109,6 @@ Task("CalculateHotfixTag").Does(() => {
     Information($"Calculated and set global hotfix tag: {globalHotfixTag} (hotfix #{hotfixNumber})");
 });
 
-Task("AddToHotfixMappings")
-    .WithCriteria(() => !string.IsNullOrEmpty(Argument("hotfixBranch", "")))
-    .WithCriteria(() => !string.IsNullOrEmpty(Argument("hotfixSuffix", "")))
-    .Does(() => {
-    
-    var hotfixBranch = Argument("hotfixBranch", "");
-    var hotfixSuffix = Argument("hotfixSuffix", "");
-    
-    Information($"Adding hotfix mapping: {hotfixBranch} -> {hotfixSuffix}");
-    
-    // Get current HOTFIX_MAPPINGS (this would be retrieved from repository variable in real GitHub Actions)
-    var hotfixMappingsJson = EnvironmentVariable("HOTFIX_MAPPINGS") ?? "{}";
-    var hotfixMappings = JsonConvert.DeserializeObject<Dictionary<string, string>>(hotfixMappingsJson);
-    
-    // Add or update the mapping
-    hotfixMappings[hotfixBranch] = hotfixSuffix;
-    
-    // Serialize back to JSON
-    var updatedJson = JsonConvert.SerializeObject(hotfixMappings, Formatting.None);
-    
-    Information($"Updated HOTFIX_MAPPINGS: {updatedJson}");
-    
-    // Update repository variable directly using GitHub CLI
-    var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
-    if (isGitHubActions)
-    {
-        var updateResult = StartProcess("gh", new ProcessSettings
-        {
-            Arguments = new ProcessArgumentBuilder()
-                .Append("variable")
-                .Append("set")
-                .Append("HOTFIX_MAPPINGS")
-                .Append("--body")
-                .AppendQuoted(updatedJson),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
-        });
-
-        if (updateResult == 0)
-        {
-            Information("Successfully updated HOTFIX_MAPPINGS repository variable");
-        }
-        else
-        {
-            Error("Failed to update HOTFIX_MAPPINGS repository variable");
-        }
-    }
-    else
-    {
-        Information("Not running in GitHub Actions - would update HOTFIX_MAPPINGS to: {0}", updatedJson);
-    }
-});
-
-Task("AddCurrentHotfixToMappings").Does(() => {
-
-    if (!gitVersion.BranchName.StartsWith("hotfix/"))
-    {
-        Information("Not a hotfix branch, skipping hotfix tag calculation.");
-        return;
-    }
-    
-    var hotfixBranch = gitVersion.BranchName;
-    Information($"Processing hotfix branch: {hotfixBranch}");
-    
-    // Get current HOTFIX_MAPPINGS (this would be retrieved from repository variable in real GitHub Actions)
-    var hotfixMappingsJson = EnvironmentVariable("HOTFIX_MAPPINGS") ?? "{}";
-    var hotfixMappings = JsonConvert.DeserializeObject<Dictionary<string, string>>(hotfixMappingsJson);
-    
-    Information($"Current HOTFIX_MAPPINGS: {hotfixMappingsJson}");
-    
-    // Check if this branch already has a mapping
-    if (hotfixMappings.ContainsKey(hotfixBranch))
-    {
-        Information($"Branch {hotfixBranch} already has mapping: {hotfixMappings[hotfixBranch]}");
-        return;
-    }
-    
-    // Find the next available suffix number
-    var existingSuffixes = hotfixMappings.Values.ToList();
-    int nextSuffix = 1;
-    
-    while (existingSuffixes.Contains(nextSuffix.ToString()))
-    {
-        nextSuffix++;
-        if (nextSuffix > 999) // Safety check
-        {
-            throw new Exception("Too many hotfix suffixes. Maximum 999 supported.");
-        }
-    }
-    
-    var newSuffix = nextSuffix.ToString();
-    hotfixMappings[hotfixBranch] = newSuffix;
-    
-    // Serialize back to JSON
-    var updatedJson = JsonConvert.SerializeObject(hotfixMappings, Formatting.None);
-    
-    Information($"Added new mapping: {hotfixBranch} -> {newSuffix}");
-    Information($"Updated HOTFIX_MAPPINGS: {updatedJson}");
-    
-    // Update repository variable directly using GitHub CLI
-    var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
-    if (isGitHubActions)
-    {
-        var updateResult = StartProcess("gh", new ProcessSettings
-        {
-            Arguments = new ProcessArgumentBuilder()
-                .Append("variable")
-                .Append("set")
-                .Append("HOTFIX_MAPPINGS")
-                .Append("--body")
-                .AppendQuoted(updatedJson),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
-        });
-
-        if (updateResult == 0)
-        {
-            Information("Successfully updated HOTFIX_MAPPINGS repository variable");
-        }
-        else
-        {
-            Error("Failed to update HOTFIX_MAPPINGS repository variable");
-        }
-    }
-    else
-    {
-        Information("Not running in GitHub Actions - would update HOTFIX_MAPPINGS to: {0}", updatedJson);
-    }
-});
 
 Task("Clean").Does(() => {
 	CleanDirectories("./artifact");
@@ -251,7 +122,7 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").IsDependentOn("AddCurrentHotfixToMappings").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("CalculateHotfixTag").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
@@ -429,12 +300,12 @@ bool IsMajorVersionUpgrade()
     {
         var masterTags = GitTags(".").Where(tag => !tag.FriendlyName.Contains("-"));
         if (!masterTags.Any()) return false;
-
+        
         var latestVersion = masterTags
             .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
             .OrderByDescending(v => v)
             .First();
-
+        
         return gitVersion.Major > latestVersion.Major;
     }
     catch
@@ -442,63 +313,6 @@ bool IsMajorVersionUpgrade()
         return false;
     }
 }
-
-Task("Set-Hashtable")
-    .Does(() =>
-{
-    var ht = new Dictionary<string, string> {
-        { "key1", "value1" },
-        { "key2", "value2" }
-    };
-
-    // Serialize dictionary to JSON
-    var json = Newtonsoft.Json.JsonConvert.SerializeObject(ht);
-
-    // Write to GitHub Actions env file
-    var githubEnv = EnvironmentVariable("GITHUB_ENV");
-    //print all env variable here
-    Information("GITHUB_ENV value: {0}", githubEnv ?? "NOT SET");
-    
-    if (!string.IsNullOrEmpty(githubEnv))
-    {
-        Information("GITHUB_ENV file exists: {0}", System.IO.File.Exists(githubEnv));
-        
-        if (System.IO.File.Exists(githubEnv))
-        {
-            Information("=== GITHUB_ENV File Content ===");
-            var githubEnvContent = System.IO.File.ReadAllText(githubEnv);
-            Information("Content: {0}", string.IsNullOrEmpty(githubEnvContent) ? "[EMPTY]" : githubEnvContent);
-            Information("=== End GITHUB_ENV Content ===");
-        }
-        
-        System.IO.File.AppendAllText(githubEnv, $"MY_HASHTABLE={json}{Environment.NewLine}");
-        
-        // Print content after writing
-        Information("=== GITHUB_ENV After Writing ===");
-        Information("Updated Content: {0}", System.IO.File.ReadAllText(githubEnv));
-        Information("=== End Updated Content ===");
-    }
-
-    Information("Hashtable stored as JSON: {0}", json);
-});
-
-Task("Use-Hashtable")  
-    .IsDependentOn("Set-Hashtable")
-    .Does(() =>
-{
-    var json = EnvironmentVariable("MY_HASHTABLE");
-
-    if (!string.IsNullOrEmpty(json))
-    {
-        var ht = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-        Information("Key1: {0}", ht["key1"]);
-        Information("Key2: {0}", ht["key2"]);
-    }
-    else
-    {
-        Warning("MY_HASHTABLE environment variable is not set.");
-    }
-});
 
 Task("Tagmaster").Does(() => {
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
