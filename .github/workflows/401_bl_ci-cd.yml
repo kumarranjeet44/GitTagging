@@ -34,7 +34,7 @@ jobs:
     - name: Restore CICD Tools
       run: dotnet tool restore
     - name: Setup GitHub CLI
-      shell: pwsh  # Use PowerShell just for this step
+      shell: powershell  # Use PowerShell just for this step
       run: |
         # Install GitHub CLI
         winget install --id GitHub.cli --silent
