@@ -34,6 +34,7 @@ jobs:
     - name: Restore CICD Tools
       run: dotnet tool restore
     - name: Setup GitHub CLI
+      shell: pwsh  # Use PowerShell just for this step
       run: |
         # Install GitHub CLI
         winget install --id GitHub.cli --silent
@@ -42,6 +43,8 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
         
         # Verify installation
-        gh --version              
+        gh --version
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}             
     - name: Build and Tests
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }}
