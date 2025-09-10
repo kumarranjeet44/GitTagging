@@ -293,8 +293,8 @@ public void GetAllAssemblyinfoPath()
   }         
 }   
 
-// Function to get tags with their corresponding branches
-Dictionary<string, List<string>> GetTagsWithBranches()
+// Function to get hotfix tags with their corresponding branches
+Dictionary<string, List<string>> GetHotfixTagsWithBranches()
 {
     if (!gitVersion.BranchName.StartsWith("hotfix/"))
     {
@@ -306,9 +306,17 @@ Dictionary<string, List<string>> GetTagsWithBranches()
     var currentTags = GitTags(".");
     var currentBranch = gitVersion.BranchName;
     
-    Information($"🔍 Looking for tags that belong to current branch: {currentBranch}");
+    Information($"🔍 Looking for hotfix tags that belong to current branch: {currentBranch}");
     
-    foreach(var tag in currentTags)
+    // Filter tags to only include hotfix-style tags (containing "-beta." and ending with ".*")
+    var hotfixTags = currentTags.Where(t => 
+        t.FriendlyName.Contains("-beta.") && 
+        System.Text.RegularExpressions.Regex.IsMatch(t.FriendlyName, @"-beta\.\d+\.\d+$")
+    ).ToList();
+    
+    Information($"🎯 Found {hotfixTags.Count} hotfix-style tags to check");
+    
+    foreach(var tag in hotfixTags)
     {
         var branches = new List<string>();
         
@@ -356,14 +364,16 @@ Dictionary<string, List<string>> GetTagsWithBranches()
             branches.Add("unknown");
         }
         
-        // Only add tags that belong to the current hotfix branch
+        // Only add hotfix tags that belong to the current hotfix branch
         if (branches.Contains(currentBranch))
         {
-            tagBranchMap[tag.FriendlyName] = branches;
+            // Add only the current branch to the dictionary, not all branches
+            tagBranchMap[tag.FriendlyName] = new List<string> { currentBranch };
+            Information($"🔍 Hotfix tag {tag.FriendlyName} found in current branch {currentBranch}");
         }
     }
     
-    Information($"🎯 Found {tagBranchMap.Count} tags for current hotfix branch '{currentBranch}'");
+    Information($"🎯 Found {tagBranchMap.Count} hotfix tags for current hotfix branch '{currentBranch}'");
     return tagBranchMap;
 }
 
@@ -412,10 +422,10 @@ Task("Tagmaster").Does(() => {
 
     //List and check existing tags
     Information("BranchName: {0}", gitVersion.BranchName);
-    Information("📋 Previous Releases with their corresponding branches:");
+    Information("📋 Previous Hotfix Releases with their corresponding branches:");
     
-    var tagsWithBranches = GetTagsWithBranches();
-    Information($"📊 Total tags found: {tagsWithBranches.Count}");
+    var tagsWithBranches = GetHotfixTagsWithBranches();
+    Information($"📊 Total hotfix tags found: {tagsWithBranches.Count}");
     
     foreach(var tagInfo in tagsWithBranches)
     {
