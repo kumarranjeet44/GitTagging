@@ -122,7 +122,7 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").IsDependentOn("CalculateHotfixTag").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("Set-Hashtable").IsDependentOn("CalculateHotfixTag").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
@@ -300,12 +300,12 @@ bool IsMajorVersionUpgrade()
     {
         var masterTags = GitTags(".").Where(tag => !tag.FriendlyName.Contains("-"));
         if (!masterTags.Any()) return false;
-        
+
         var latestVersion = masterTags
             .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
             .OrderByDescending(v => v)
             .First();
-        
+
         return gitVersion.Major > latestVersion.Major;
     }
     catch
@@ -313,6 +313,45 @@ bool IsMajorVersionUpgrade()
         return false;
     }
 }
+
+Task("Set-Hashtable")
+    .Does(() =>
+{
+    var ht = new Dictionary<string, string> {
+        { "key1", "value1" },
+        { "key2", "value2" }
+    };
+
+    // Serialize dictionary to JSON
+    var json = Newtonsoft.Json.JsonConvert.SerializeObject(ht);
+
+    // Write to GitHub Actions env file
+    var githubEnv = EnvironmentVariable("GITHUB_ENV");
+    if(!string.IsNullOrEmpty(githubEnv))
+    {
+        System.IO.File.AppendAllText(githubEnv, $"MY_HASHTABLE={json}{Environment.NewLine}");
+    }
+
+    Information("Hashtable stored as JSON: {0}", json);
+});
+
+Task("Use-Hashtable")
+    .IsDependentOn("Set-Hashtable")
+    .Does(() =>
+{
+    var json = EnvironmentVariable("MY_HASHTABLE");
+
+    if (!string.IsNullOrEmpty(json))
+    {
+        var ht = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+        Information("Key1: {0}", ht["key1"]);
+        Information("Key2: {0}", ht["key2"]);
+    }
+    else
+    {
+        Warning("MY_HASHTABLE environment variable is not set.");
+    }
+});
 
 Task("Tagmaster").Does(() => {
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
