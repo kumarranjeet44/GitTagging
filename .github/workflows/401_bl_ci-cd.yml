@@ -32,6 +32,16 @@ jobs:
     - name: Reset build agent
       run: dotnet build-server shutdown
     - name: Restore CICD Tools
-      run: dotnet tool restore            
+      run: dotnet tool restore
+    - name: Setup GitHub CLI
+      run: |
+        # Install GitHub CLI
+        winget install --id GitHub.cli --silent
+        
+        # Authenticate with GitHub
+        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+        
+        # Verify installation
+        gh --version              
     - name: Build and Tests
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }}
