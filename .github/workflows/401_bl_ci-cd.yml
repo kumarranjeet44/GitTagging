@@ -20,7 +20,7 @@ env:
 jobs:
   Build-401-BL-Continuous-Integration:
     runs-on: self-hosted
-    if: true # set if condition to false to skip the current job
+    if: true # set if condition to false to skip the current job First commit on test-sem-01
     defaults:
       run:
         shell: cmd
@@ -32,6 +32,6 @@ jobs:
     - name: Reset build agent
       run: dotnet build-server shutdown
     - name: Restore CICD Tools
-      run: dotnet tool restore            
+      run: dotnet tool restore         
     - name: Build and Tests
-      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }}
+      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }} --githubRunAttempt=${{ github.run_attempt }}

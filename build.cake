@@ -58,8 +58,10 @@ else if (gitVersion.BranchName == "master") {
     completeVersionForWix = gitVersion.MajorMinorPatch;   
 }
 
-var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB"); 
-var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB"); 
+var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB");
+var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB");
+var githubRunNumber = Argument("githubRunNumber", "PROVIDED_BY_GITHUB");
+var githubRunAttempt = Argument("githubRunAttempt", "PROVIDED_BY_GITHUB");
 
 // Removed artifactory repo variables.............
 var zipPath = new DirectoryPath("./artifact");
@@ -69,6 +71,46 @@ var EXG401UIAssemblyVersion = completeVersionForWix;
 var assemblyInfo = ParseAssemblyInfo("GitSemVersioning/AssemblyInfo.cs");
 var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
 var MSDAssemblyVersion_unstable = assemblyInfo.AssemblyInformationalVersion;
+
+string globalHotfixTag = "";
+Task("CalculateHotfixTag").Does(() => {
+    if (!gitVersion.BranchName.StartsWith("hotfix/"))
+    {
+        Information("Not a hotfix branch, skipping hotfix tag calculation.");
+        return;
+    }
+        
+    var currentTags = GitTags(".");
+    string baseVersionTag = $"v{gitVersion.MajorMinorPatch}-beta.{gitVersion.CommitsSinceVersionSource}";
+    
+    // Find the next available hotfix number for this version
+    int hotfixNumber = 1;
+    string candidateTag;
+    
+    do
+    {
+        candidateTag = $"{baseVersionTag}.{hotfixNumber}";
+        
+        // Check if this tag already exists
+        if (!currentTags.Any(t => t.FriendlyName == candidateTag))
+        {
+            break; // Found an available tag
+        }
+        
+        hotfixNumber++;
+        
+        // Safety check to avoid infinite loop
+        if (hotfixNumber > 999)
+        {
+            throw new Exception($"Too many hotfix tags for version {baseVersionTag}. Maximum 999 hotfixes supported.");
+        }
+        
+    } while (true);
+    
+    globalHotfixTag = candidateTag;
+    Information($"Calculated and set global hotfix tag: {globalHotfixTag} (hotfix #{hotfixNumber})");
+});
+
 
 Task("Clean").Does(() => {
 	CleanDirectories("./artifact");
@@ -82,7 +124,7 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("CalculateHotfixTag").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
@@ -253,6 +295,90 @@ public void GetAllAssemblyinfoPath()
   }         
 }   
 
+// Function to get hotfix tags with their corresponding branches
+Dictionary<string, List<string>> GetHotfixTagsWithBranches()
+{
+    if (!gitVersion.BranchName.StartsWith("hotfix/"))
+    {
+        Information("Not a hotfix branch, skipping hotfix version setup.");
+        return new Dictionary<string, List<string>>();
+    }
+    
+    var tagBranchMap = new Dictionary<string, List<string>>();
+    var currentTags = GitTags(".");
+    var currentBranch = gitVersion.BranchName;
+    
+    Information($"🔍 Looking for hotfix tags that belong to current branch: {currentBranch}");
+    
+    // Filter tags to only include hotfix-style tags (containing "-beta." and ending with ".*")
+    var hotfixTags = currentTags.Where(t => 
+        t.FriendlyName.Contains("-beta.") && 
+        System.Text.RegularExpressions.Regex.IsMatch(t.FriendlyName, @"-beta\.\d+\.\d+$")
+    ).ToList();
+    
+    Information($"🎯 Found {hotfixTags.Count} hotfix-style tags to check");
+    
+    foreach(var tag in hotfixTags)
+    {
+        var branches = new List<string>();
+        
+        try
+        {
+            // Use git command to find which branches contain this tag
+            var processResult = StartProcess("git", new ProcessSettings
+            {
+                Arguments = $"branch --contains {tag.FriendlyName}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                Silent = true
+            });
+            
+            if (processResult == 0)
+            {
+                // Get the output using a different approach
+                var branchOutput = "";
+                var gitProcess = StartProcess("git", new ProcessSettings
+                {
+                    Arguments = $"branch --contains {tag.FriendlyName}",
+                    RedirectStandardOutput = true,
+                    Silent = true
+                }, out IEnumerable<string> outputLines);
+                
+                if (outputLines != null)
+                {
+                    foreach(var line in outputLines)
+                    {
+                        if (!string.IsNullOrWhiteSpace(line))
+                        {
+                            var branchName = line.Trim().TrimStart('*').Trim();
+                            if (!string.IsNullOrWhiteSpace(branchName))
+                            {
+                                branches.Add(branchName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Information($"Warning: Could not determine branches for tag {tag.FriendlyName}: {ex.Message}");
+            branches.Add("unknown");
+        }
+        
+        // Only add hotfix tags that belong to the current hotfix branch
+        if (branches.Contains(currentBranch))
+        {
+            // Add only the current branch to the dictionary, not all branches
+            tagBranchMap[tag.FriendlyName] = new List<string> { currentBranch };
+            Information($"🔍 Hotfix tag {tag.FriendlyName} found in current branch {currentBranch}");
+        }
+    }
+    
+    Information($"🎯 Found {tagBranchMap.Count} hotfix tags for current hotfix branch '{currentBranch}'");
+    return tagBranchMap;
+}
+
 // Function to check if current master tag major version is less than new major version
 bool IsMajorVersionUpgrade()
 {
@@ -275,6 +401,8 @@ bool IsMajorVersionUpgrade()
 }
 
 Task("Tagmaster").Does(() => {
+    Information($"-------GitHub Run Number: {githubRunNumber}");
+    Information($"-------GitHub Run Attempt: {githubRunAttempt}");
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
     
     // Check if this is a major version upgrade
@@ -298,11 +426,28 @@ Task("Tagmaster").Does(() => {
 
     //List and check existing tags
     Information("BranchName: {0}", gitVersion.BranchName);
-    Information("Previous Releases:");
-    var currentTags = GitTags(".");
-    foreach(var tag in currentTags)
+    Information("📋 Previous Hotfix Releases with their corresponding branches:");
+    
+    var tagsWithBranches = GetHotfixTagsWithBranches();
+    Information($"📊 Total hotfix tags found: {tagsWithBranches.Count}");
+    
+    foreach(var tagInfo in tagsWithBranches)
     {
-        Information(tag.FriendlyName);
+        var tagName = tagInfo.Key;
+        var branches = tagInfo.Value;
+        
+        if (branches.Count == 1)
+        {
+            Information($"🏷️  {tagName} → {branches[0]}");
+        }
+        else if (branches.Count > 1)
+        {
+            Information($"🏷️  {tagName} → [{string.Join(", ", branches)}]");
+        }
+        else
+        {
+            Information($"🏷️  {tagName} → [no branches found]");
+        }
     }
     //comment below line to consider all branches
     if (gitVersion.BranchName != "master" && gitVersion.BranchName != "develop" && !gitVersion.BranchName.StartsWith("release/") && !gitVersion.BranchName.StartsWith("hotfix/"))
@@ -321,10 +466,13 @@ Task("Tagmaster").Does(() => {
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}";
     }
+    else if (gitVersion.BranchName.StartsWith("hotfix/"))
+    {
+        branchTag = globalHotfixTag;
+    }
     else if (
         gitVersion.BranchName == "develop" ||
-        gitVersion.BranchName.StartsWith("release/") ||
-        gitVersion.BranchName.StartsWith("hotfix/")
+        gitVersion.BranchName.StartsWith("release/")
     )
     {
         if (string.IsNullOrEmpty(gitVersion.PreReleaseLabel))
@@ -339,6 +487,7 @@ Task("Tagmaster").Does(() => {
         throw new Exception($"Branch '{gitVersion.BranchName}' is not supported for tagging.");
     }
     
+    var currentTags = GitTags(".");
     if(currentTags.Any(t => t.FriendlyName == branchTag))
     {
         Information($"Tag {branchTag} already exists, skip tagging.");

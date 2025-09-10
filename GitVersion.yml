@@ -1,8 +1,6 @@
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-format: '{Major}.{Minor}.{Patch}.{CommitsSinceVersionSource}'
 mode: ContinuousDeployment
-#next-version: 7.1.0  --> first i  made this version to master now next develop should be 7.2.0...
-#next-version: 7.2.0
 branches:
   master:
     mode: ContinuousDelivery
