@@ -293,6 +293,56 @@ public void GetAllAssemblyinfoPath()
   }         
 }   
 
+// Function to get tags with their corresponding branches
+Dictionary<string, List<string>> GetTagsWithBranches()
+{
+    var tagBranchMap = new Dictionary<string, List<string>>();
+    var currentTags = GitTags(".");
+    
+    foreach(var tag in currentTags)
+    {
+        var branches = new List<string>();
+        
+        try
+        {
+            // Use git command to find which branches contain this tag
+            var branchOutput = "";
+            var gitResult = StartProcess("git", new ProcessSettings
+            {
+                Arguments = $"branch --contains {tag.FriendlyName}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                Silent = true
+            }, out branchOutput);
+            
+            if (gitResult == 0)
+            {
+                if (!string.IsNullOrWhiteSpace(branchOutput))
+                {
+                    var branchLines = branchOutput.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach(var line in branchLines)
+                    {
+                        var branchName = line.Trim().TrimStart('*').Trim();
+                        if (!string.IsNullOrWhiteSpace(branchName))
+                        {
+                            branches.Add(branchName);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Information($"Warning: Could not determine branches for tag {tag.FriendlyName}: {ex.Message}");
+            branches.Add("unknown");
+        }
+        
+        tagBranchMap[tag.FriendlyName] = branches;
+    }
+    
+    return tagBranchMap;
+}
+
 // Function to check if current master tag major version is less than new major version
 bool IsMajorVersionUpgrade()
 {
@@ -338,11 +388,27 @@ Task("Tagmaster").Does(() => {
 
     //List and check existing tags
     Information("BranchName: {0}", gitVersion.BranchName);
-    Information("Previous Releases:");
-    var currentTags = GitTags(".");
-    foreach(var tag in currentTags)
+    Information("📋 Previous Releases with their corresponding branches:");
+    
+    var tagsWithBranches = GetTagsWithBranches();
+    
+    foreach(var tagInfo in tagsWithBranches)
     {
-        Information(tag.FriendlyName);
+        var tagName = tagInfo.Key;
+        var branches = tagInfo.Value;
+        
+        if (branches.Count == 1)
+        {
+            Information($"🏷️  {tagName} → {branches[0]}");
+        }
+        else if (branches.Count > 1)
+        {
+            Information($"🏷️  {tagName} → [{string.Join(", ", branches)}]");
+        }
+        else
+        {
+            Information($"🏷️  {tagName} → [no branches found]");
+        }
     }
     //comment below line to consider all branches
     if (gitVersion.BranchName != "master" && gitVersion.BranchName != "develop" && !gitVersion.BranchName.StartsWith("release/") && !gitVersion.BranchName.StartsWith("hotfix/"))
