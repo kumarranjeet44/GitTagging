@@ -304,6 +304,9 @@ Dictionary<string, List<string>> GetTagsWithBranches()
     
     var tagBranchMap = new Dictionary<string, List<string>>();
     var currentTags = GitTags(".");
+    var currentBranch = gitVersion.BranchName;
+    
+    Information($"🔍 Looking for tags that belong to current branch: {currentBranch}");
     
     foreach(var tag in currentTags)
     {
@@ -353,9 +356,14 @@ Dictionary<string, List<string>> GetTagsWithBranches()
             branches.Add("unknown");
         }
         
-        tagBranchMap[tag.FriendlyName] = branches;
+        // Only add tags that belong to the current hotfix branch
+        if (branches.Contains(currentBranch))
+        {
+            tagBranchMap[tag.FriendlyName] = branches;
+        }
     }
     
+    Information($"🎯 Found {tagBranchMap.Count} tags for current hotfix branch '{currentBranch}'");
     return tagBranchMap;
 }
 
