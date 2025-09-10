@@ -122,7 +122,7 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").IsDependentOn("Set-Hashtable").IsDependentOn("CalculateHotfixTag").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("Use-Hashtable").IsDependentOn("CalculateHotfixTag").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
@@ -335,7 +335,7 @@ Task("Set-Hashtable")
     Information("Hashtable stored as JSON: {0}", json);
 });
 
-Task("Use-Hashtable")
+Task("Use-Hashtable")  
     .IsDependentOn("Set-Hashtable")
     .Does(() =>
 {
