@@ -296,6 +296,12 @@ public void GetAllAssemblyinfoPath()
 // Function to get tags with their corresponding branches
 Dictionary<string, List<string>> GetTagsWithBranches()
 {
+    if (!gitVersion.BranchName.StartsWith("hotfix/"))
+    {
+        Information("Not a hotfix branch, skipping hotfix version setup.");
+        return new Dictionary<string, List<string>>();
+    }
+    
     var tagBranchMap = new Dictionary<string, List<string>>();
     var currentTags = GitTags(".");
     
@@ -401,6 +407,7 @@ Task("Tagmaster").Does(() => {
     Information("📋 Previous Releases with their corresponding branches:");
     
     var tagsWithBranches = GetTagsWithBranches();
+    Information($"📊 Total tags found: {tagsWithBranches.Count}");
     
     foreach(var tagInfo in tagsWithBranches)
     {
