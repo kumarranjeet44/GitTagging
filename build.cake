@@ -61,6 +61,7 @@ else if (gitVersion.BranchName == "master") {
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB");
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB");
 var githubRunNumber = Argument("githubRunNumber", "PROVIDED_BY_GITHUB");
+var githubRunAttempt = Argument("githubRunAttempt", "PROVIDED_BY_GITHUB");
 
 // Removed artifactory repo variables.............
 var zipPath = new DirectoryPath("./artifact");
@@ -401,6 +402,7 @@ bool IsMajorVersionUpgrade()
 
 Task("Tagmaster").Does(() => {
     Information($"-------GitHub Run Number: {githubRunNumber}");
+    Information($"-------GitHub Run Attempt: {githubRunAttempt}");
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
     
     // Check if this is a major version upgrade
