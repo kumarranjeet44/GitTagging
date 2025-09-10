@@ -162,9 +162,13 @@ Task("AddToHotfixMappings")
     }
 });
 
-Task("AddCurrentHotfixToMappings")
-    .WithCriteria(() => gitVersion.BranchName.StartsWith("hotfix/"))
-    .Does(() => {
+Task("AddCurrentHotfixToMappings").Does(() => {
+
+    if (!gitVersion.BranchName.StartsWith("hotfix/"))
+    {
+        Information("Not a hotfix branch, skipping hotfix tag calculation.");
+        return;
+    }
     
     var hotfixBranch = gitVersion.BranchName;
     Information($"Processing hotfix branch: {hotfixBranch}");
@@ -247,7 +251,7 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").IsDependentOn("AddCurrentHotfixToMappings").IsDependentOn("CalculateHotfixTag").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("AddCurrentHotfixToMappings").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
