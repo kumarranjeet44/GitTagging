@@ -399,6 +399,7 @@ bool IsMajorVersionUpgrade()
 }
 
 Task("Tagmaster").Does(() => {
+    Information($"-------GitHub Run Number: {githubRunNumber}");
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
     
     // Check if this is a major version upgrade
