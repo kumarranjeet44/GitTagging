@@ -306,26 +306,36 @@ Dictionary<string, List<string>> GetTagsWithBranches()
         try
         {
             // Use git command to find which branches contain this tag
-            var branchOutput = "";
-            var gitResult = StartProcess("git", new ProcessSettings
+            var processResult = StartProcess("git", new ProcessSettings
             {
                 Arguments = $"branch --contains {tag.FriendlyName}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 Silent = true
-            }, out branchOutput);
+            });
             
-            if (gitResult == 0)
+            if (processResult == 0)
             {
-                if (!string.IsNullOrWhiteSpace(branchOutput))
+                // Get the output using a different approach
+                var branchOutput = "";
+                var gitProcess = StartProcess("git", new ProcessSettings
                 {
-                    var branchLines = branchOutput.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach(var line in branchLines)
+                    Arguments = $"branch --contains {tag.FriendlyName}",
+                    RedirectStandardOutput = true,
+                    Silent = true
+                }, out IEnumerable<string> outputLines);
+                
+                if (outputLines != null)
+                {
+                    foreach(var line in outputLines)
                     {
-                        var branchName = line.Trim().TrimStart('*').Trim();
-                        if (!string.IsNullOrWhiteSpace(branchName))
+                        if (!string.IsNullOrWhiteSpace(line))
                         {
-                            branches.Add(branchName);
+                            var branchName = line.Trim().TrimStart('*').Trim();
+                            if (!string.IsNullOrWhiteSpace(branchName))
+                            {
+                                branches.Add(branchName);
+                            }
                         }
                     }
                 }
@@ -448,6 +458,7 @@ Task("Tagmaster").Does(() => {
         throw new Exception($"Branch '{gitVersion.BranchName}' is not supported for tagging.");
     }
     
+    var currentTags = GitTags(".");
     if(currentTags.Any(t => t.FriendlyName == branchTag))
     {
         Information($"Tag {branchTag} already exists, skip tagging.");
