@@ -327,9 +327,27 @@ Task("Set-Hashtable")
 
     // Write to GitHub Actions env file
     var githubEnv = EnvironmentVariable("GITHUB_ENV");
-    if(!string.IsNullOrEmpty(githubEnv))
+    //print all env variable here
+    Information("GITHUB_ENV value: {0}", githubEnv ?? "NOT SET");
+    
+    if (!string.IsNullOrEmpty(githubEnv))
     {
+        Information("GITHUB_ENV file exists: {0}", System.IO.File.Exists(githubEnv));
+        
+        if (System.IO.File.Exists(githubEnv))
+        {
+            Information("=== GITHUB_ENV File Content ===");
+            var githubEnvContent = System.IO.File.ReadAllText(githubEnv);
+            Information("Content: {0}", string.IsNullOrEmpty(githubEnvContent) ? "[EMPTY]" : githubEnvContent);
+            Information("=== End GITHUB_ENV Content ===");
+        }
+        
         System.IO.File.AppendAllText(githubEnv, $"MY_HASHTABLE={json}{Environment.NewLine}");
+        
+        // Print content after writing
+        Information("=== GITHUB_ENV After Writing ===");
+        Information("Updated Content: {0}", System.IO.File.ReadAllText(githubEnv));
+        Information("=== End Updated Content ===");
     }
 
     Information("Hashtable stored as JSON: {0}", json);
