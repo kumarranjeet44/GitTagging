@@ -60,7 +60,6 @@ else if (gitVersion.BranchName == "master") {
 
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB");
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB");
-var githubRunNumber = Argument("githubRunNumber", "PROVIDED_BY_GITHUB");
 var githubRunAttempt = Argument("githubRunAttempt", "PROVIDED_BY_GITHUB");
 var enableDevMSI = Argument<bool>("enableDevMSI", false);
 
