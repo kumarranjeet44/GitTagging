@@ -26,7 +26,14 @@ var buildVersion = "1.1";
 var ouputDir = Directory("./obj");
 List<string> allProjectAssemblyInfoPath = new List<string>();
 
-// Removed sonarQube and artifactory arguments....
+// Removed artifactory repo variables.............
+var zipPath = new DirectoryPath("./artifact");
+
+var EXG401UIAssemblyVersion = completeVersionForWix;
+
+var assemblyInfo = ParseAssemblyInfo("GitSemVersioning/AssemblyInfo.cs");
+var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
+var MSDAssemblyVersion_unstable = assemblyInfo.AssemblyInformationalVersion;
 
 var gitVersion = GitVersion(new GitVersionSettings {});
 var githubBuildNumber = gitVersion.CommitsSinceVersionSource;
@@ -36,27 +43,6 @@ public string completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
 public string completeVersionForWix = gitVersion.MajorMinorPatch;
 public string completeVersionForAssemblyInfo_unstable = "";
 public string completeVersionForWix_unstable = "";
-//string.Concat(gitVersion.MajorMinorPatch, ".", githubBuildNumber)
-if (gitVersion.BranchName == "develop") {
-    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-alpha.", githubBuildNumber);
-    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-alpha.", githubBuildNumber);
-}
-else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")) {
-    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-beta.", githubBuildNumber);
-    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-beta.", githubBuildNumber);
-}
-else if (gitVersion.BranchName.StartsWith("feature/")) {
-    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-feature.", githubBuildNumber);
-    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-feature.", githubBuildNumber);
-}
-else if (gitVersion.BranchName.StartsWith("bugfix/")) {
-    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-bugfix.", githubBuildNumber);
-    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-bugfix.", githubBuildNumber);
-}
-else if (gitVersion.BranchName == "master") { 
-    completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
-    completeVersionForWix = gitVersion.MajorMinorPatch;   
-}
 
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB");
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB");
@@ -69,14 +55,28 @@ var devCycleBaseRunNumber = Argument("devCycleBaseRunNumber", EnvironmentVariabl
 var suffix = (int.Parse(githubRunNumber) - int.Parse(devCycleBaseRunNumber)).ToString();
 Information($"Calculated suffix: {suffix}");
 
-// Removed artifactory repo variables.............
-var zipPath = new DirectoryPath("./artifact");
+if (gitVersion.BranchName == "develop") {
+    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource);
+    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource);
+}
+else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")) {
+    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-beta.", commitsSinceVersionSource) + "-" + suffix;
+    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-beta.", commitsSinceVersionSource) + "-" + suffix;
+}
+else if (gitVersion.BranchName.StartsWith("feature/")) {
+    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-feature.", commitsSinceVersionSource) + "-" + suffix;
+    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-feature.", commitsSinceVersionSource) + "-" + suffix;
+}
+else if (gitVersion.BranchName.StartsWith("bugfix/")) {
+    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-bugfix.", commitsSinceVersionSource) + "-" + suffix;
+    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-bugfix.", commitsSinceVersionSource) + "-" + suffix;
+}
+else if (gitVersion.BranchName == "master") {
+    completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
+    completeVersionForWix = gitVersion.MajorMinorPatch;
+}
 
-var EXG401UIAssemblyVersion = completeVersionForWix;
-
-var assemblyInfo = ParseAssemblyInfo("GitSemVersioning/AssemblyInfo.cs");
-var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
-var MSDAssemblyVersion_unstable = assemblyInfo.AssemblyInformationalVersion;
+Information("BranchName:: " + gitVersion.BranchName);
 
 Task("Clean").Does(() => {
 	CleanDirectories("./artifact");
