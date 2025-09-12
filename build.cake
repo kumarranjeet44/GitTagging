@@ -90,7 +90,9 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").Does(() =>
+// before building MSI, update the ProductVersion in AssemblyInfo.cs file so that while installing MSI, it will show the correct version, not previous version
+// before build execute ACS registration task as it is required to update the licenseclient file if production tag major version increased
+Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionInAssemblyInWix").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
@@ -237,7 +239,10 @@ Task("SetVersionInAssemblyInWix").Does(() => {
     foreach (var path in allProjectAssemblyInfoPath)
     {
         ReplaceVersionInWix(path, MSDAssemblyVersion, completeVersionForAssemblyInfo);
-        ReplaceVersionInWix(path, MSDAssemblyVersion_unstable, completeVersionForAssemblyInfo_unstable);
+        if(gitVersion.BranchName != "master")
+        {
+            ReplaceVersionInWix(path, MSDAssemblyVersion_unstable, completeVersionForAssemblyInfo_unstable);
+        }
     }
 });
 // Replaces version based on bambooBranch version
@@ -308,7 +313,7 @@ Task("Tagmaster").Does(() => {
 
     //List and check existing tags
     Information("BranchName: {0}", gitVersion.BranchName);
-        
+
     //comment below line to consider all branches
     if (gitVersion.BranchName != "master" && gitVersion.BranchName != "develop" && !gitVersion.BranchName.StartsWith("release/") && !gitVersion.BranchName.StartsWith("hotfix/") && !enableDevMSI)
     {
