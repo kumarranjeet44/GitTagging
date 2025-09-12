@@ -36,7 +36,7 @@ var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
 var MSDAssemblyVersion_unstable = assemblyInfo.AssemblyInformationalVersion;
 
 var gitVersion = GitVersion(new GitVersionSettings {});
-var githubBuildNumber = gitVersion.CommitsSinceVersionSource;
+var commitsSinceVersionSource = gitVersion.CommitsSinceVersionSource;
 var gitProjectVersionNumber = gitVersion.MajorMinorPatch;
 var projectVersionNumber = gitVersion.MajorMinorPatch;
 public string completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
