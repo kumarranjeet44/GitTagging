@@ -16,7 +16,7 @@ env:
   gitusername: kumarranjeet44
   gituserpassword: "${{ secrets.GIT_PAT  }}"
   #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
-  DEV_CYCLE_BASE_RUN_NUMBER: 1050
+  DEV_CYCLE_BASE_RUN_NUMBER: 235
   enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory
 
 
