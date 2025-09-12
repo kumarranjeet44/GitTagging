@@ -238,10 +238,14 @@ Task("SetVersionInAssemblyInWix").Does(() => {
     GetAllAssemblyinfoPath();
     foreach (var path in allProjectAssemblyInfoPath)
     {
-        ReplaceVersionInWix(path, MSDAssemblyVersion, completeVersionForAssemblyInfo);
-        if(gitVersion.BranchName != "master")
+        
+        if (gitVersion.BranchName != "master")
         {
             ReplaceVersionInWix(path, MSDAssemblyVersion_unstable, completeVersionForAssemblyInfo_unstable);
+        }
+        else
+        {
+            ReplaceVersionInWix(path, MSDAssemblyVersion, completeVersionForAssemblyInfo);
         }
     }
 });
