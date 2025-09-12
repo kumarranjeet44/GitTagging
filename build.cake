@@ -316,7 +316,7 @@ Task("Tagmaster").Does(() => {
     }
 
     //List and check existing tags
-    Information("BranchName: {0}", gitVersion.BranchName);
+    Information($"Current branch {gitVersion.BranchName}");
 
     //comment below line to consider all branches
     if (gitVersion.BranchName != "master" && gitVersion.BranchName != "develop" && !gitVersion.BranchName.StartsWith("release/") && !gitVersion.BranchName.StartsWith("hotfix/") && !enableDevMSI)
