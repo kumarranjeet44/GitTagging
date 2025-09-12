@@ -90,7 +90,7 @@ Task("Restore")
         DotNetRestore("./GitSemVersioning.sln");
     });
 
-Task("Build").IsDependentOn("Restore").IsDependentOn("CalculateHotfixTag").Does(() =>
+Task("Build").IsDependentOn("Restore").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
