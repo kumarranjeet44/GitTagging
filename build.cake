@@ -29,20 +29,17 @@ List<string> allProjectAssemblyInfoPath = new List<string>();
 // Removed artifactory repo variables.............
 var zipPath = new DirectoryPath("./artifact");
 
-var EXG401UIAssemblyVersion = completeVersionForWix;
-
 var assemblyInfo = ParseAssemblyInfo("GitSemVersioning/AssemblyInfo.cs");
 var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
-var MSDAssemblyVersion_unstable = assemblyInfo.AssemblyInformationalVersion;
+var MSDAssemblyInformationalVersion = assemblyInfo.AssemblyInformationalVersion;
+public string completeAssemblyInformationalVersion = "";
+public string completeAssemblyVersion = "";
 
 var gitVersion = GitVersion(new GitVersionSettings {});
 var commitsSinceVersionSource = gitVersion.CommitsSinceVersionSource;
 var gitProjectVersionNumber = gitVersion.MajorMinorPatch;
 var projectVersionNumber = gitVersion.MajorMinorPatch;
-public string completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
-public string completeVersionForWix = gitVersion.MajorMinorPatch;
-public string completeVersionForAssemblyInfo_unstable = "";
-public string completeVersionForWix_unstable = "";
+
 
 // Determine branch label for WiX product name
 public string branchLabel = "";
@@ -75,24 +72,24 @@ var suffix = (int.Parse(githubRunNumber) - int.Parse(devCycleBaseRunNumber)).ToS
 Information($"Calculated suffix: {suffix}");
 
 if (gitVersion.BranchName == "develop") {
-    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource);
-    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource);
+    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource);
+    completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
 else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")) {
-    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-beta.", commitsSinceVersionSource) + "-" + suffix;
-    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-beta.", commitsSinceVersionSource) + "-" + suffix;
+    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-beta.", commitsSinceVersionSource) + "-" + suffix;
+    completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource) + "-" + suffix;
 }
 else if (gitVersion.BranchName.StartsWith("feature/")) {
-    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-feature.", commitsSinceVersionSource) + "-" + suffix;
-    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-feature.", commitsSinceVersionSource) + "-" + suffix;
+    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-feature.", commitsSinceVersionSource) + "-" + suffix;
+    completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource) + "-" + suffix;
 }
 else if (gitVersion.BranchName.StartsWith("bugfix/")) {
-    completeVersionForAssemblyInfo_unstable = string.Concat(projectVersionNumber, "-bugfix.", commitsSinceVersionSource) + "-" + suffix;
-    completeVersionForWix_unstable = string.Concat(projectVersionNumber, "-bugfix.", commitsSinceVersionSource) + "-" + suffix;
+    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-bugfix.", commitsSinceVersionSource) + "-" + suffix;
+    completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource) + "-" + suffix;
 }
 else if (gitVersion.BranchName == "master") {
-    completeVersionForAssemblyInfo = gitVersion.MajorMinorPatch;
-    completeVersionForWix = gitVersion.MajorMinorPatch;
+    completeAssemblyInformationalVersion = gitVersion.MajorMinorPatch;
+    completeAssemblyVersion = gitVersion.MajorMinorPatch;
 }
 
 Information("BranchName:: " + gitVersion.BranchName);
@@ -143,7 +140,7 @@ Task("UpdateWebToolVersion")
         : (!string.IsNullOrEmpty(gitVersion.PreReleaseLabel)
             ? char.ToUpper(gitVersion.PreReleaseLabel[0]) + gitVersion.PreReleaseLabel.Substring(1) + " "
             : "")
-        + completeVersionForAssemblyInfo.ToString();
+        + completeAssemblyInformationalVersion.ToString();
 
 
     // Write back to file
@@ -223,34 +220,6 @@ Task("Test").ContinueOnError().Does(() =>
 
 });
 
-Task("SetVersion")
-   .Does(() => {
-       var assemblyInfoPath = "./AssemblyInfo.cs";
-       if (!System.IO.File.Exists(assemblyInfoPath))
-       {
-           Error($"File not found: {assemblyInfoPath}");
-           return;
-       }
-       Information($"Updating version in {assemblyInfoPath}");
-
-       // Optionally, print the file content before
-       Information("Before update:");
-       Information(System.IO.File.ReadAllText(assemblyInfoPath));
-
-       var versionPattern = "(?<=AssemblyVersion\\(\")(.+?)(?=\"\\))";
-       var fileVersionPattern = "(?<=AssemblyFileVersion\\(\")(.+?)(?=\"\\))";
-
-       var versionResult = ReplaceRegexInFiles(assemblyInfoPath, versionPattern, gitVersion.AssemblySemFileVer);
-       var fileVersionResult = ReplaceRegexInFiles(assemblyInfoPath, fileVersionPattern, gitVersion.AssemblySemFileVer);
-
-       Information($"AssemblyVersion updated: {versionResult}");
-       Information($"AssemblyFileVersion updated: {fileVersionResult}");
-
-       // Optionally, print the file content after
-       Information("After update:");
-       Information(System.IO.File.ReadAllText(assemblyInfoPath));
-   });
-
 
  Task("SetBranchLabelInWix").ContinueOnError().Does(() => {
     Information($"Setting branch label in WiX file: '{branchLabel}' for branch: {gitVersion.BranchName}");
@@ -297,24 +266,16 @@ Task("SetVersion")
 });  
 
 
-Task("SetVersionInAssemblyInWix").Does(() => {
+Task("SetVersionInAssemblyInWix").Does(() => 
+{
     GetAllAssemblyinfoPath();
     foreach (var path in allProjectAssemblyInfoPath)
     {
-
-        if (gitVersion.BranchName != "master")
-        {
-            ReplaceVersionInWix(path, MSDAssemblyVersion_unstable, completeVersionForAssemblyInfo_unstable);
-        }
-        else
-        {
-            ReplaceVersionInWix(path, MSDAssemblyVersion, completeVersionForAssemblyInfo);
-        }
-        
+        ReplaceVersionInWix(path, MSDAssemblyVersion, completeAssemblyVersion);
+        ReplaceVersionInWix(path, MSDAssemblyInformationalVersion, completeAssemblyInformationalVersion);
+    }
     Information($"Major.Minor.Patch.Revison for AssemblyVersion(assemblyInfo.cs) to be use in Wix as Version: {assemblyInfo.AssemblyVersion}");
     Information($"Major.Minor.Patch.Revison for AssemblyInformationalVersion(assemblyInfo.cs) as: {assemblyInfo.AssemblyInformationalVersion}");
-
-    }
 });
 // Replaces version based on bambooBranch version
 public void ReplaceVersionInWix(string fileName, string searchWith, string replaceWith)
