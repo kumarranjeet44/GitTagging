@@ -157,7 +157,8 @@ Task("Test").ContinueOnError().Does(() =>
 });
 
  Task("SetBranchLabelInWix").ContinueOnError().Does(() => {
-    Information($"Setting branch label in WiX file: '{branchLabel}' for branch: {gitVersion.BranchName}");
+
+    Information($"Branch Label for Product Name in WiX : {branchLabel}");
     if (!System.IO.File.Exists(wixFile))
      {
          Error($"File not found: {wixFile}");
@@ -186,8 +187,6 @@ Task("Test").ContinueOnError().Does(() =>
     System.IO.File.WriteAllText(wixFile, wixContent);
 
     Information($"Replaced WiX product name pattern: {currentProductNameInWix} -> {newProductName}");
-    Information($"WiX file updated with branch label: {branchLabel}");
-
 });  
 
 Task("SetVersionInAssemblyInWix").Does(() => 
