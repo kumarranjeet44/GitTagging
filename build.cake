@@ -29,7 +29,7 @@ List<string> allProjectAssemblyInfoPath = new List<string>();
 // Removed artifactory repo variables.............
 var zipPath = new DirectoryPath("./artifact");
 
-var assemblyInfo = ParseAssemblyInfo("GitSemVersioning/AssemblyInfo.cs");
+var assemblyInfo = ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs");
 var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
 var MSDAssemblyInformationalVersion = assemblyInfo.AssemblyInformationalVersion;
 public string completeAssemblyInformationalVersion = "";
