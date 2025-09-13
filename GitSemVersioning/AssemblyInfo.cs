@@ -47,7 +47,7 @@ using System.Windows;
 
 // Below parameter will get updated and be in proper sync with MSI version and Git Tag only if we run UpdateAssemblyBackToOrigin Task in build.cake file
 // It currently without running UpdateAssemblyBackToOrigin Task, GitTagversion, Github App version and MSI version will be in proper sync
-[assembly: AssemblyVersion("8.2.0")]
-[assembly: AssemblyFileVersion("8.2.0")]
-[assembly: AssemblyInformationalVersion("8.2.0-alpha.20")]
+[assembly: AssemblyVersion("8.3.0.12")]
+[assembly: AssemblyFileVersion("8.3.0.12")]
+[assembly: AssemblyInformationalVersion("8.3.0-alpha.12")]
 
