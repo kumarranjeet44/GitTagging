@@ -15,12 +15,16 @@ env:
   vstest: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"'
   gitusername: kumarranjeet44
   gituserpassword: "${{ secrets.GIT_PAT  }}"
+  #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
+  DEV_CYCLE_BASE_RUN_NUMBER: 235
+  enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory
+
 
 
 jobs:
   Build-401-BL-Continuous-Integration:
     runs-on: self-hosted
-    if: true # set if condition to false to skip the current job First commit on test-sem-01
+    if: true # set if condition to false to skip the current job...
     defaults:
       run:
         shell: cmd
@@ -33,5 +37,5 @@ jobs:
       run: dotnet build-server shutdown
     - name: Restore CICD Tools
       run: dotnet tool restore         
-    - name: Build and Tests
+    - name: Build, Tests and Tag
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }} --githubRunAttempt=${{ github.run_attempt }}
