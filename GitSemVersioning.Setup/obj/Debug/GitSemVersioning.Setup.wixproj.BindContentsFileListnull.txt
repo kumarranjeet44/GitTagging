@@ -1,0 +1,1 @@
+C:\Users\H494457\OneDrive - Honeywell\Desktop\GitTagging\GitSemVersioning\bin\Debug\net8.0\GitSemVersioning.dll

@@ -1,0 +1,3 @@
+C:\Users\H494457\OneDrive - Honeywell\Desktop\GitTagging\GitSemVersioning.Setup\bin\Debug\cab1.cab
+C:\Users\H494457\OneDrive - Honeywell\Desktop\GitTagging\GitSemVersioning.Setup\bin\Debug\GitSemVersioning.Setup.msi
+C:\Users\H494457\OneDrive - Honeywell\Desktop\GitTagging\GitSemVersioning.Setup\bin\Debug\GitSemVersioning.Setup.wixpdb
