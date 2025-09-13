@@ -245,7 +245,11 @@ Task("Test").ContinueOnError().Does(() =>
     string newProductName;
      if (string.IsNullOrEmpty(branchLabel))
      {
-         newProductName = $"$(var.ProductName) {gitVersion.MajorMinorPatch}";
+         newProductName = $"$(var.ProductName) {gitVersion.MajorMinorPatch}"; 
+     }
+     else if (branchLabel == "Alpha")
+     {
+         newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)";
      }
      else
      {
