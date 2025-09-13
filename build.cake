@@ -254,7 +254,7 @@ Task("SetVersion")
 
  Task("SetBranchLabelInWix").Does(() => {
     Information($"Setting branch label in WiX file: '{branchLabel}' for branch: {gitVersion.BranchName}");
-    if (!System.IO.File.Exists()){
+    if (!System.IO.File.Exists(wixFile)){
            Error($"File not found: {wixFile}");
            return;
     }
