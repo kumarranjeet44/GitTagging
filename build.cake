@@ -75,13 +75,9 @@ else if (gitVersion.BranchName == "master") {
     completeAssemblyVersion = gitVersion.MajorMinorPatch;
 }
 
-Information($"BranchName :: {gitVersion.BranchName}");
 Information($"Branch: {gitVersion.BranchName} -> Label: '{branchLabel}'");
 Information($"completeAssemblyInformationalVersion: {completeAssemblyInformationalVersion}");
 Information($"completeAssemblyVersion: {completeAssemblyVersion}");
-
-
-
 
 Task("Clean").Does(() => {
 	CleanDirectories("./artifact");
@@ -109,7 +105,6 @@ Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionInAssemblyInWix"
     });
 
 });
-
 
 // Note: ContinueOnError for test Task to allow Bamboo capture TestResults produced and halt pipeline from there.
 Task("Test").ContinueOnError().Does(() =>
@@ -161,7 +156,6 @@ Task("Test").ContinueOnError().Does(() =>
 
 });
 
-
  Task("SetBranchLabelInWix").ContinueOnError().Does(() => {
     Information($"Setting branch label in WiX file: '{branchLabel}' for branch: {gitVersion.BranchName}");
     if (!System.IO.File.Exists(wixFile))
@@ -196,7 +190,6 @@ Task("Test").ContinueOnError().Does(() =>
 
 });  
 
-
 Task("SetVersionInAssemblyInWix").Does(() => 
 {
     GetAllAssemblyinfoPath();
@@ -227,7 +220,6 @@ public void GetAllAssemblyinfoPath()
    }                
   }         
 }   
-
 
 // Function to check if current master tag major version is less than new major version
 bool IsMajorVersionUpgrade()
@@ -405,11 +397,9 @@ Task("UpdateWebToolVersion")
        });
 });
 
-
 Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
     .IsDependentOn("Tagmaster");
-
 RunTarget(target);
