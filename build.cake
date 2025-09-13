@@ -32,6 +32,9 @@ var zipPath = new DirectoryPath("./artifact");
 var assemblyInfo = ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs");
 var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
 var MSDAssemblyInformationalVersion = assemblyInfo.AssemblyInformationalVersion;
+Information($"MSDAssemblyVersion: {MSDAssemblyVersion}");
+Information($"MSDAssemblyInformationalVersion: {MSDAssemblyInformationalVersion}");
+
 public string completeAssemblyInformationalVersion = "";
 public string completeAssemblyVersion = "";
 
