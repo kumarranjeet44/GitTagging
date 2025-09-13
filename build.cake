@@ -44,10 +44,29 @@ public string completeVersionForWix = gitVersion.MajorMinorPatch;
 public string completeVersionForAssemblyInfo_unstable = "";
 public string completeVersionForWix_unstable = "";
 
+// Determine branch label for WiX product name
+public string branchLabel = "";
+if (gitVersion.BranchName == "develop") {
+    branchLabel = "Alpha";
+}
+else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")) {
+    branchLabel = "Beta";
+}
+else if (gitVersion.BranchName == "master") {
+    branchLabel = ""; 
+}
+else {
+    branchLabel = "Dev";
+}
+
+Information($"Branch: {gitVersion.BranchName} -> Label: '{branchLabel}'");
+
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB");
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB");
 var githubRunAttempt = Argument("githubRunAttempt", "PROVIDED_BY_GITHUB");
 var enableDevMSI = Argument<bool>("enableDevMSI", false);
+var wixFile = Argument("wixFile","GitSemVersioning.Setup/Product.wxs");
+var wixProjFile = Argument("wixProjFile","GitSemVersioning.Setup/GitSemVersioning.Setup.wixproj");
 
 var githubRunNumber = Argument("githubRunNumber", "PROVIDED_BY_GITHUB");
 var devCycleBaseRunNumber = Argument("devCycleBaseRunNumber", EnvironmentVariable("DEV_CYCLE_BASE_RUN_NUMBER") ?? PROVIDED_BY_GITHUB);
@@ -235,7 +254,10 @@ Task("SetVersion")
 
  Task("SetBranchLabelInWix").Does(() => {
     Information($"Setting branch label in WiX file: '{branchLabel}' for branch: {gitVersion.BranchName}");
-    
+    if (!System.IO.File.Exists()){
+           Error($"File not found: {wixFile}");
+           return;
+    }
     // Update the WiX file to use dynamic branch label
     var wixContent = System.IO.File.ReadAllText(wixFile);
     
