@@ -169,17 +169,7 @@ Task("Test").ContinueOnError().Does(() =>
          Error($"File not found: {wixFile}");
          return;
      }
-    // Update the WiX file to use dynamic branch label
-    var wixContent = System.IO.File.ReadAllText(wixFile);
-    
-    // Define the different possible product name patterns
-    var possiblePatterns = new[] {
-        "$(var.ProductName) Alpha $(var.VERSION)",
-        "$(var.ProductName) Beta $(var.VERSION)", 
-        "$(var.ProductName) Dev $(var.VERSION)",
-        "$(var.ProductName) $(var.VERSION)"
-    };
-    
+     
     // Determine the new product name format
     string newProductName;
      if (string.IsNullOrEmpty(branchLabel))
@@ -194,21 +184,16 @@ Task("Test").ContinueOnError().Does(() =>
      {
          newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)-{suffix}";
      }
-    
-    // Replace any existing pattern with the new one
-     foreach (var pattern in possiblePatterns)
-     {
-         if (wixContent.Contains($"Name=\"{pattern}\""))
-         {
-             wixContent = wixContent.Replace($"Name=\"{pattern}\"", $"Name=\"{newProductName}\"");
-             Information($"Replaced WiX product name pattern: {pattern} -> {newProductName}");
-             break;
-         }
-     }
-    
-    // Write the updated content back
+
+     // Update the WiX file to use dynamic product name
+    var currentProductNameInWix = "$(var.ProductName) $(var.VERSION)";
+    var wixContent = System.IO.File.ReadAllText(wixFile);
+    wixContent = wixContent.Replace($"Name=\"{currentProductNameInWix}\"", $"Name=\"{newProductName}\"");
     System.IO.File.WriteAllText(wixFile, wixContent);
+
+    Information($"Replaced WiX product name pattern: {currentProductNameInWix} -> {newProductName}");
     Information($"WiX file updated with branch label: {branchLabel}");
+
 });  
 
 
