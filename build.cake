@@ -110,6 +110,8 @@ Task("Restore")
 // before build execute ACS registration task as it is required to update the licenseclient file if production tag major version increased
 Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionInAssemblyInWix").IsDependentOn("SetBranchLabelInWix").Does(() =>
 {
+    Information($"Major.Minor.Patch.Revison for AssemblyVersion(AssemblyInfo.cs) to be use in Wix as Version: {assemblyInfo.AssemblyVersion}");
+    Information($"Major.Minor.Patch.Revison for AssemblyInformationalVersion(AssemblyInfo.cs) as: {assemblyInfo.AssemblyInformationalVersion}");
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
         Configuration = configuration,
@@ -274,8 +276,6 @@ Task("SetVersionInAssemblyInWix").Does(() =>
         ReplaceVersionInWix(path, MSDAssemblyVersion, completeAssemblyVersion);
         ReplaceVersionInWix(path, MSDAssemblyInformationalVersion, completeAssemblyInformationalVersion);
     }
-    Information($"Major.Minor.Patch.Revison for AssemblyVersion(assemblyInfo.cs) to be use in Wix as Version: {assemblyInfo.AssemblyVersion}");
-    Information($"Major.Minor.Patch.Revison for AssemblyInformationalVersion(assemblyInfo.cs) as: {assemblyInfo.AssemblyInformationalVersion}");
 });
 // Replaces version based on bambooBranch version
 public void ReplaceVersionInWix(string fileName, string searchWith, string replaceWith)
