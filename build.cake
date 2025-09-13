@@ -298,12 +298,10 @@ Task("SetVersion")
 
 
 Task("SetVersionInAssemblyInWix").Does(() => {
-    //Information($"Last MSD version to be search as: {MSDAssemblyVersion} and replace with: {completeVersionForAssemblyInfo}");
-    //Information($"Last MSD version to be search as: {MSDAssemblyVersion_unstable} and replace with: {completeVersionForAssemblyInfo_unstable}");
     GetAllAssemblyinfoPath();
     foreach (var path in allProjectAssemblyInfoPath)
     {
-        
+
         if (gitVersion.BranchName != "master")
         {
             ReplaceVersionInWix(path, MSDAssemblyVersion_unstable, completeVersionForAssemblyInfo_unstable);
@@ -312,6 +310,10 @@ Task("SetVersionInAssemblyInWix").Does(() => {
         {
             ReplaceVersionInWix(path, MSDAssemblyVersion, completeVersionForAssemblyInfo);
         }
+        
+    Information($"Major.Minor.Patch.Revison for AssemblyVersion(assemblyInfo.cs) to be use in Wix as Version: {assemblyInfo.AssemblyVersion}");
+    Information($"Major.Minor.Patch.Revison for AssemblyInformationalVersion(assemblyInfo.cs) as: {assemblyInfo.AssemblyInformationalVersion}");
+
     }
 });
 // Replaces version based on bambooBranch version
