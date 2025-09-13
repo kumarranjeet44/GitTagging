@@ -1,7 +1,0 @@
-C:\Users\H494457\OneDrive - Honeywell\Desktop\GitTagging\GitSemVersioning.Setup\bin\Debug\GitSemVersioning.Setup.msi
-C:\Users\H494457\OneDrive - Honeywell\Desktop\GitTagging\GitSemVersioning.Setup\bin\Debug\GitSemVersioning.Setup.wixpdb
-obj\Debug\Product.wixobj
-obj\Debug\GitSemVersioning.Setup.wixproj.BindContentsFileListnull.txt
-obj\Debug\GitSemVersioning.Setup.wixproj.BindOutputsFileListnull.txt
-obj\Debug\GitSemVersioning.Setup.wixproj.BindBuiltOutputsFileListnull.txt
-C:\Users\H494457\OneDrive - Honeywell\Desktop\GitTagging\GitSemVersioning.Setup\bin\Debug\cab1.cab
