@@ -111,8 +111,8 @@ Task("Restore")
 // before build execute ACS registration task as it is required to update the licenseclient file if production tag major version increased
 Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionInAssemblyInWix").IsDependentOn("SetBranchLabelInWix").Does(() =>
 {
-    Information($"Major.Minor.Patch.Revison for AssemblyVersion(AssemblyInfo.cs) to be use in WiX as Version: {assemblyInfo.AssemblyVersion}");
-    Information($"Major.Minor.Patch.Revison for AssemblyInformationalVersion(AssemblyInfo.cs) as: {assemblyInfo.AssemblyInformationalVersion}");
+    Information($"Major.Minor.Patch.Revison for AssemblyVersion(AssemblyInfo.cs) to be use in WiX as Version: {ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs").AssemblyVersion}");
+    Information($"Major.Minor.Patch.Revison for AssemblyInformationalVersion(AssemblyInfo.cs) as: {ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs").AssemblyInformationalVersion}");
 
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
