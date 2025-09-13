@@ -282,6 +282,7 @@ public void ReplaceVersionInWix(string fileName, string searchWith, string repla
 {
     var configData = System.IO.File.ReadAllText(fileName, Encoding.UTF8);
     configData = Regex.Replace(configData, searchWith, replaceWith);
+    Information($"Replaced '{searchWith}' with '{replaceWith}' in {fileName}");
     System.IO.File.WriteAllText(fileName, configData, Encoding.UTF8);
 }
 //Get all project Assembly info Path
