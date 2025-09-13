@@ -92,7 +92,7 @@ Task("Restore")
 
 // before building MSI, update the ProductVersion in AssemblyInfo.cs file so that while installing MSI, it will show the correct version, not previous version
 // before build execute ACS registration task as it is required to update the licenseclient file if production tag major version increased
-Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionInAssemblyInWix").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionInAssemblyInWix").IsDependentOn("SetBranchLabelInWix").Does(() =>
 {
     DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
     {
@@ -231,6 +231,49 @@ Task("SetVersion")
        Information("After update:");
        Information(System.IO.File.ReadAllText(assemblyInfoPath));
    });
+
+
+ Task("SetBranchLabelInWix").Does(() => {
+    Information($"Setting branch label in WiX file: '{branchLabel}' for branch: {gitVersion.BranchName}");
+    
+    // Update the WiX file to use dynamic branch label
+    var wixContent = System.IO.File.ReadAllText(wixFile);
+    
+    // Define the different possible product name patterns
+    var possiblePatterns = new[] {
+        "$(var.ProductName) Alpha $(var.VERSION)",
+        "$(var.ProductName) Beta $(var.VERSION)", 
+        "$(var.ProductName) Dev $(var.VERSION)",
+        "$(var.ProductName) $(var.VERSION)"
+    };
+    
+    // Determine the new product name format
+    string newProductName;
+     if (string.IsNullOrEmpty(branchLabel))
+     {
+         newProductName = $"$(var.ProductName) {gitVersion.MajorMinorPatch}";
+     }
+     else
+     {
+         newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)-{suffix}";
+     }
+    
+    // Replace any existing pattern with the new one
+     foreach (var pattern in possiblePatterns)
+     {
+         if (wixContent.Contains($"Name=\"{pattern}\""))
+         {
+             wixContent = wixContent.Replace($"Name=\"{pattern}\"", $"Name=\"{newProductName}\"");
+             Information($"Replaced WiX product name pattern: {pattern} -> {newProductName}");
+             break;
+         }
+     }
+    
+    // Write the updated content back
+    System.IO.File.WriteAllText(wixFile, wixContent);
+    Information($"WiX file updated with branch label: {branchLabel}");
+});  
+
 
 Task("SetVersionInAssemblyInWix").Does(() => {
     //Information($"Last MSD version to be search as: {MSDAssemblyVersion} and replace with: {completeVersionForAssemblyInfo}");
@@ -403,7 +446,5 @@ Task("full")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
     .IsDependentOn("Tagmaster");
-    //.IsDependentOn("SetVersionInAssemblyInWix");
-    //.IsDependentOn("UpdateWebToolVersion");
 
 RunTarget(target);
