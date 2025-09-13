@@ -93,7 +93,7 @@ Task("Restore")
 
 // before building MSI, update the ProductVersion in AssemblyInfo.cs file so that while installing MSI, it will show the correct version, not previous version
 // before build execute ACS registration task as it is required to update the licenseclient file if production tag major version increased
-Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionInAssemblyInWix").IsDependentOn("SetBranchLabelInWix").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionsInAssemblyFile").IsDependentOn("SetProductNameInWix").Does(() =>
 {
     Information($"Major.Minor.Patch.Revison for AssemblyVersion(AssemblyInfo.cs) to be use in WiX as Version: {ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs").AssemblyVersion}");
     Information($"Major.Minor.Patch.Revison for AssemblyInformationalVersion(AssemblyInfo.cs) as: {ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs").AssemblyInformationalVersion}");
@@ -156,7 +156,7 @@ Task("Test").ContinueOnError().Does(() =>
 
 });
 
- Task("SetBranchLabelInWix").ContinueOnError().Does(() => {
+ Task("SetProductNameInWix").ContinueOnError().Does(() => {
 
     Information($"Branch Label for Product Name in WiX : {branchLabel}");
     if (!System.IO.File.Exists(wixFile))
@@ -189,7 +189,7 @@ Task("Test").ContinueOnError().Does(() =>
     Information($"Replaced WiX product name pattern: {currentProductNameInWix} -> {newProductName}");
 });  
 
-Task("SetVersionInAssemblyInWix").Does(() => 
+Task("SetVersionsInAssemblyFile").Does(() => 
 {
     GetAllAssemblyinfoPath();
     foreach (var path in allProjectAssemblyInfoPath)
