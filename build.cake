@@ -37,9 +37,7 @@ public string completeAssemblyVersion = "";
 
 var gitVersion = GitVersion(new GitVersionSettings {});
 var commitsSinceVersionSource = gitVersion.CommitsSinceVersionSource;
-var gitProjectVersionNumber = gitVersion.MajorMinorPatch;
 var projectVersionNumber = gitVersion.MajorMinorPatch;
-
 
 // Determine branch label for WiX product name
 public string branchLabel = "";
@@ -138,7 +136,7 @@ Task("UpdateWebToolVersion")
 
     // Update the WebToolVersion property
     jsonObj.WebToolVersion = gitVersion.BranchName == "master"
-        ? gitProjectVersionNumber.ToString()
+        ? projectVersionNumber.ToString()
         : (!string.IsNullOrEmpty(gitVersion.PreReleaseLabel)
             ? char.ToUpper(gitVersion.PreReleaseLabel[0]) + gitVersion.PreReleaseLabel.Substring(1) + " "
             : "")
@@ -149,7 +147,7 @@ Task("UpdateWebToolVersion")
     var updatedJson = JsonConvert.SerializeObject(jsonObj, Formatting.Indented);
     System.IO.File.WriteAllText(jsonPath, updatedJson);
 
-    Information("WebToolVersion updated to: " + gitProjectVersionNumber);
+    Information("WebToolVersion updated to: " + projectVersionNumber);
 
            // Optionally, print the file content after
        Information("After update:");
@@ -225,10 +223,13 @@ Task("Test").ContinueOnError().Does(() =>
 
  Task("SetBranchLabelInWix").ContinueOnError().Does(() => {
     Information($"Setting branch label in WiX file: '{branchLabel}' for branch: {gitVersion.BranchName}");
-    if (!System.IO.File.Exists(wixFile)){
-           Error($"File not found: {wixFile}");
-           return;
-    }
+    Information($"Major.Minor.Patch.Revison for AssemblyVersion(AssemblyInfo.cs) to be use in Wix as Version: {assemblyInfo.AssemblyVersion}");
+    Information($"Major.Minor.Patch.Revison for AssemblyInformationalVersion(AssemblyInfo.cs) as: {assemblyInfo.AssemblyInformationalVersion}");
+    if (!System.IO.File.Exists(wixFile))
+     {
+         Error($"File not found: {wixFile}");
+         return;
+     }
     // Update the WiX file to use dynamic branch label
     var wixContent = System.IO.File.ReadAllText(wixFile);
     
