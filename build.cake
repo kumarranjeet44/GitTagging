@@ -171,10 +171,6 @@ Task("Test").ContinueOnError().Does(() =>
      {
          newProductName = $"$(var.ProductName) {gitVersion.MajorMinorPatch}"; 
      }
-     else if (branchLabel == "Alpha")
-     {
-         newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)";
-     }
      else
      {
          newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)-{suffix}";
@@ -293,18 +289,21 @@ Task("Tagmaster").Does(() => {
     }
     else if (gitVersion.BranchName == "develop")
     {
-        branchTag = $"v{gitVersion.MajorMinorPatch}-alpha.{gitVersion.CommitsSinceVersionSource}";
+        branchTag = $"v{gitVersion.MajorMinorPatch}-alpha.{gitVersion.CommitsSinceVersionSource}-{suffix}";
     }
     else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/"))
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}-beta.{gitVersion.CommitsSinceVersionSource}-{suffix}";
     }
-    else if (enableDevMSI)
+    else if (enableDevMSI && (gitVersion.BranchName.StartsWith("feature/") || gitVersion.BranchName.StartsWith("bugfix/")))
     {
-        branchTag = $"v{gitVersion.MajorMinorPatch}-feature.{gitVersion.CommitsSinceVersionSource}-{suffix}";
         if (gitVersion.BranchName.StartsWith("bugfix/"))
         {
             branchTag = $"v{gitVersion.MajorMinorPatch}-bugfix.{gitVersion.CommitsSinceVersionSource}-{suffix}";
+        }
+        else
+        { 
+            branchTag = $"v{gitVersion.MajorMinorPatch}-feature.{gitVersion.CommitsSinceVersionSource}-{suffix}";
         }
     }
     else
