@@ -51,7 +51,7 @@ public string branchLabel = ""; // Dynamic branch label to be set in WiX Product
 
 if (gitVersion.BranchName == "develop") {
     branchLabel = "Alpha";
-    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource);
+    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource)+ "-" + suffix;
     completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
 else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")) {
@@ -171,10 +171,6 @@ Task("Test").ContinueOnError().Does(() =>
      {
          newProductName = $"$(var.ProductName) {gitVersion.MajorMinorPatch}"; 
      }
-     else if (branchLabel == "Alpha")
-     {
-         newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)";
-     }
      else
      {
          newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)-{suffix}";
@@ -253,7 +249,6 @@ Task("Tagmaster").Does(() => {
     {
         Information("🚀 MAJOR VERSION UPGRADE DETECTED!");
         Information("This indicates breaking changes or significant new features.");
-        // Add any special handling for major version upgrades here
     }
 
     //Sanity check
@@ -293,18 +288,21 @@ Task("Tagmaster").Does(() => {
     }
     else if (gitVersion.BranchName == "develop")
     {
-        branchTag = $"v{gitVersion.MajorMinorPatch}-alpha.{gitVersion.CommitsSinceVersionSource}";
+        branchTag = $"v{gitVersion.MajorMinorPatch}-alpha.{gitVersion.CommitsSinceVersionSource}-{suffix}";
     }
     else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/"))
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}-beta.{gitVersion.CommitsSinceVersionSource}-{suffix}";
     }
-    else if (enableDevMSI)
+    else if (enableDevMSI && (gitVersion.BranchName.StartsWith("feature/") || gitVersion.BranchName.StartsWith("bugfix/")))
     {
-        branchTag = $"v{gitVersion.MajorMinorPatch}-feature.{gitVersion.CommitsSinceVersionSource}-{suffix}";
         if (gitVersion.BranchName.StartsWith("bugfix/"))
         {
             branchTag = $"v{gitVersion.MajorMinorPatch}-bugfix.{gitVersion.CommitsSinceVersionSource}-{suffix}";
+        }
+        else
+        { 
+            branchTag = $"v{gitVersion.MajorMinorPatch}-feature.{gitVersion.CommitsSinceVersionSource}-{suffix}";
         }
     }
     else
