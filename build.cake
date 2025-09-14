@@ -205,7 +205,7 @@ Task("SetProductNameInWix").ContinueOnError().Does(() =>
 Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async () =>
 {
 
-    if (!IsMajorVersionUpgrade()())
+    if (!IsMajorVersionUpgrade())
     {
         Information($"IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()}  ACS Registration skipped: {gitVersion.BranchName} with major version increment required.");
         return;
