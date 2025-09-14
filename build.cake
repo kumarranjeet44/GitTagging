@@ -43,6 +43,8 @@ var acsApplicationId = Argument("acsApplicationId", EnvironmentVariable("ACS_APP
 var testResultsDir = Directory("./TestResults");
 var assemblyInfo = ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs");
 var outputDir = Directory("./obj");
+var licenseclientKeyFile = ""; //Argument("licenseclientKeyFile", $"{sourceDir}/{projectName}/uop.acs.licenseclient.key");
+
 
 var gitVersion = GitVersion(new GitVersionSettings { });
 var commitsSinceVersionSource = gitVersion.CommitsSinceVersionSource;
