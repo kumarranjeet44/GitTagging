@@ -41,48 +41,44 @@ var MSDAssemblyVersion = assemblyInfo.AssemblyVersion;
 var MSDAssemblyInformationalVersion = assemblyInfo.AssemblyInformationalVersion;
 var suffix = (int.Parse(githubRunNumber) - int.Parse(devCycleBaseRunNumber)).ToString();
 
-Information($"Calculated suffix for tagging on Multiple releases, hotfix, bugfix and feature: {suffix}");
 Information($"MSDAssemblyVersion: {MSDAssemblyVersion}");
 Information($"MSDAssemblyInformationalVersion: {MSDAssemblyInformationalVersion}");
 
-public string completeAssemblyInformationalVersion = "";
-public string completeAssemblyVersion = "";
-public string branchLabel = ""; // Dynamic branch label to be set in WiX Product Name
+var branchLabelInWixProductName = "";
+var completeAssemblyInformationalVersion = "";
+var completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 
 if (gitVersion.BranchName == "develop")
 {
-    branchLabel = "Alpha";
+    branchLabelInWixProductName = "Alpha";
     completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource) + "-" + suffix;
-    completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
 else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/"))
 {
-    branchLabel = "Beta";
+    branchLabelInWixProductName = "Beta";
     completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-beta.", commitsSinceVersionSource) + "-" + suffix;
-    completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
 else if (gitVersion.BranchName.StartsWith("feature/"))
 {
-    branchLabel = "Dev";
+    branchLabelInWixProductName = "Dev";
     completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-feature.", commitsSinceVersionSource) + "-" + suffix;
-    completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
 else if (gitVersion.BranchName.StartsWith("bugfix/"))
 {
-    branchLabel = "Dev";
+    branchLabelInWixProductName = "Dev";
     completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-bugfix.", commitsSinceVersionSource) + "-" + suffix;
-    completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
 else if (gitVersion.BranchName == "master")
 {
-    branchLabel = "";
-    completeAssemblyInformationalVersion = gitVersion.MajorMinorPatch;
-    completeAssemblyVersion = gitVersion.MajorMinorPatch;
+    branchLabelInWixProductName = "";
+    completeAssemblyInformationalVersion = projectVersionNumber;
+    completeAssemblyVersion = projectVersionNumber;
 }
 
-Information($"Branch: {gitVersion.BranchName} -> Label: '{branchLabel}'");
+Information($"Branch: {gitVersion.BranchName} -> Label: '{branchLabelInWixProductName}'");
 Information($"completeAssemblyInformationalVersion: {completeAssemblyInformationalVersion}");
 Information($"completeAssemblyVersion: {completeAssemblyVersion}");
+Information($"Calculated suffix for tagging on Multiple releases, hotfix, bugfix and feature: {suffix}");
 
 Task("Clean").Does(() =>
 {
@@ -100,7 +96,7 @@ Task("Restore")
 
 // before building MSI, update the ProductVersion in AssemblyInfo.cs file so that while installing MSI, it will show the correct version, not previous version
 // before build execute ACS registration task as it is required to update the licenseclient file if production tag major version increased
-Task("Build").IsDependentOn("Restore").IsDependentOn("SetVersionsInAssemblyFile").IsDependentOn("SetProductNameInWix").Does(() =>
+Task("Build").IsDependentOn("Restore").IsDependentOn("ACSRegistrationForMajorUpgrade").IsDependentOn("SetVersionsInAssemblyFile").IsDependentOn("SetProductNameInWix").Does(() =>
 {
     Information($"Updated AssemblyVersion(AssemblyInfo.cs) to be use in WiX as Version: {ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs").AssemblyVersion}");
     Information($"Updated AssemblyInformationalVersion(AssemblyInfo.cs) as: {ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs").AssemblyInformationalVersion}");
@@ -166,7 +162,7 @@ Task("Test").ContinueOnError().Does(() =>
 Task("SetProductNameInWix").ContinueOnError().Does(() =>
 {
 
-    Information($"Branch Label for Product Name in WiX : {branchLabel}");
+    Information($"Branch Label for Product Name in WiX : {branchLabelInWixProductName}");
     if (!System.IO.File.Exists(wixFile))
     {
         Error($"File not found: {wixFile}");
@@ -175,13 +171,13 @@ Task("SetProductNameInWix").ContinueOnError().Does(() =>
 
     // Determine the new product name format
     string newProductName;
-    if (string.IsNullOrEmpty(branchLabel))
+    if (string.IsNullOrEmpty(branchLabelInWixProductName))
     {
         newProductName = $"$(var.ProductName) {gitVersion.MajorMinorPatch}";
     }
     else
     {
-        newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)-{suffix}";
+        newProductName = $"$(var.ProductName) {branchLabelInWixProductName} $(var.VERSION)-{suffix}";
     }
 
     // Update the WiX file to use dynamic product name
@@ -192,6 +188,145 @@ Task("SetProductNameInWix").ContinueOnError().Does(() =>
 
     Information($"Replaced WiX product name pattern: {currentProductNameInWix} -> {newProductName}");
 });
+
+Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async () =>
+{
+
+    if (!IsMajorVersionUpgrade())
+    {
+        Information($"ACS Registration skipped: {gitVersion.BranchName} with major version increment required.");
+        return;
+    }
+
+    if (!isTokenValid || string.IsNullOrEmpty(azureAccessToken) || acsApplicationId.Equals(PROVIDED_BY_GITHUB))
+    {
+        Error("Missing Azure token or ACS Application ID.");
+        throw new Exception("ACS Registration failed: Missing required authentication or configuration.");
+    }
+
+    try
+    {
+        using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post,
+                $"https://uopacs.honeywell.com/api/registrations/automations?applicationId={acsApplicationId}&applicationVersion={gitVersion.MajorMinorPatch}");
+            request.Headers.Add("accept", "application/json");
+            request.Headers.Add("Authorization", $"Bearer {azureAccessToken}");
+
+            var response = await client.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+
+            // Check if registration was successful, fail build if critical and failed
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorMessage = $"ACS Registration failed with status {response.StatusCode}: {content}";
+                Error(errorMessage);
+
+                var errorEntry = $"ACS FAILURE - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\nBranch: {gitVersion.BranchName}\nStatus: {response.StatusCode}\nResponse: {content}\n{new string('-', 50)}\n";
+                System.IO.File.AppendAllText(licenseclientKeyFile, errorEntry);
+
+                throw new Exception(errorMessage);
+            }
+
+            var logEntry = $"ACS SUCCESS - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                          $"Branch: {gitVersion.BranchName}\n" +
+                          $"Status: {response.StatusCode}\n" +
+                          $"Response: {content}\n" +
+                          new string('-', 50) + "\n";
+
+            System.IO.File.AppendAllText(licenseclientKeyFile, logEntry);
+            Information("ACS Registration completed successfully.");
+        }
+    }
+    catch (Exception ex) when (!(ex is Exception && ex.Message.Contains("ACS Registration failed")))
+    {
+        var errorEntry = $"ACS ERROR - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\nError: {ex.Message}\n{new string('-', 50)}\n";
+        System.IO.File.AppendAllText(licenseclientKeyFile, errorEntry);
+        Error($"ACS Registration failed: {ex.Message}");
+        throw; // Re-throw to fail the build
+    }
+});
+
+Task("GetAzureToken").Does(async () =>
+{
+    if (!IsMajorVersionUpgrade())
+    {
+        Information("GetAzureToken skipped: Major version not incremented.");
+        return;
+    }
+
+    // Validate environment variables
+    if (azureClientId.Equals(PROVIDED_BY_GITHUB) || azureClientSecret.Equals(PROVIDED_BY_GITHUB) ||
+        azureTenantId.Equals(PROVIDED_BY_GITHUB) || acsClientScope.Equals(PROVIDED_BY_GITHUB))
+    {
+        var errorMessage = "Missing Azure configuration. Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, ACS_CLIENT_SCOPE.";
+        Error(errorMessage);
+        isTokenValid = false;
+        throw new Exception(errorMessage);
+    }
+
+    try
+    {
+        using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, $"https://login.microsoftonline.com/{azureTenantId}/oauth2/v2.0/token");
+            request.Content = new FormUrlEncodedContent(new[] {
+                new KeyValuePair<string, string>("client_id", azureClientId),
+                new KeyValuePair<string, string>("scope", acsClientScope),
+                new KeyValuePair<string, string>("client_secret", azureClientSecret),
+                new KeyValuePair<string, string>("grant_type", "client_credentials")
+            });
+
+            var response = await client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                var errorMessage = $"Azure token request failed with status {response.StatusCode}: {errorContent}";
+                Error(errorMessage);
+                isTokenValid = false;
+                azureAccessToken = "";
+                throw new Exception(errorMessage);
+            }
+
+            azureTokenResponse = await response.Content.ReadAsStringAsync();
+            var tokenData = JsonConvert.DeserializeObject<dynamic>(azureTokenResponse);
+            azureAccessToken = tokenData.access_token;
+            isTokenValid = true;
+
+            Information("Azure token retrieved successfully.");
+        }
+    }
+    catch (Exception ex) when (!(ex.Message.Contains("Azure token request failed") || ex.Message.Contains("Missing Azure configuration")))
+    {
+        var errorMessage = $"Azure token acquisition failed: {ex.Message}";
+        Error(errorMessage);
+        isTokenValid = false;
+        azureAccessToken = "";
+        throw new Exception(errorMessage);
+    }
+});
+
+// Function to check if current master tag major version is less than new major version
+bool IsMajorVersionUpgrade()
+{
+    try
+    {
+        var masterTags = GitTags(".").Where(tag => !tag.FriendlyName.Contains("-"));
+        if (!masterTags.Any()) return false;
+
+        var latestVersion = masterTags
+            .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
+            .OrderByDescending(v => v)
+            .First();
+
+        return gitVersion.Major > latestVersion.Major;
+    }
+    catch
+    {
+        return false;
+    }
+}
 
 Task("SetVersionsInAssemblyFile").Does(() =>
 {
@@ -224,26 +359,7 @@ public void GetAllAssemblyinfoPath()
     }
 }
 
-// Function to check if current master tag major version is less than new major version
-bool IsMajorVersionUpgrade()
-{
-    try
-    {
-        var masterTags = GitTags(".").Where(tag => !tag.FriendlyName.Contains("-"));
-        if (!masterTags.Any()) return false;
 
-        var latestVersion = masterTags
-            .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
-            .OrderByDescending(v => v)
-            .First();
-
-        return gitVersion.Major > latestVersion.Major;
-    }
-    catch
-    {
-        return false;
-    }
-}
 
 Task("Tagmaster").Does(() =>
 {
