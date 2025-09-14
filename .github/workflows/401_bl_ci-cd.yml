@@ -18,7 +18,12 @@ env:
   #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
   DEV_CYCLE_BASE_RUN_NUMBER: 235
   enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory
-
+# Azure and ACS configuration
+  AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
+  AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  ACS_CLIENT_SCOPE: "${{ secrets.ACS_CLIENT_SCOPE }}"
+  ACS_APPLICATION_ID: "${{ secrets.ACS_APPLICATION_ID }}"
 
 
 jobs:
