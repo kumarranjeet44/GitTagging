@@ -342,7 +342,7 @@ bool IsMajorVersionUpgrade()
             .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
             .OrderByDescending(v => v)
             .First();
-
+        Information($"MajorMinorPatch: {MajorMinorPatch}  ---> {latestVersion}");
         return gitVersion.Major > latestVersion.Major;
     }
     catch
