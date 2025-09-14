@@ -205,9 +205,9 @@ Task("SetProductNameInWix").ContinueOnError().Does(() =>
 Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async () =>
 {
 
-    if (!IsMajorVersionUpgrade())
+    if (!IsMajorVersionUpgrade()())
     {
-        Information($"ACS Registration skipped: {gitVersion.BranchName} with major version increment required.");
+        Information($"IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()}  ACS Registration skipped: {gitVersion.BranchName} with major version increment required.");
         return;
     }
     else
@@ -269,7 +269,7 @@ Task("GetAzureToken").Does(async () =>
 {
     if (!IsMajorVersionUpgrade())
     {
-        Information("GetAzureToken skipped: Major version not incremented.");
+        Information($"IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()}  GetAzureToken skipped: Major version not incremented.");
         return;
     }
     else
