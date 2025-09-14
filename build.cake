@@ -17,6 +17,10 @@ using Cake.Core.Text;
 using System.Text.RegularExpressions;
 
 public const string PROVIDED_BY_GITHUB = "PROVIDED_BY_GITHUB";
+public static string azureAccessToken = "";
+public static string azureTokenResponse = "";
+public static bool isTokenValid = false;
+
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB");
 var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB");
 var githubRunAttempt = Argument("githubRunAttempt", "PROVIDED_BY_GITHUB");
