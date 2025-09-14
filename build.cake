@@ -29,6 +29,13 @@ var solution = Argument("solution", "./GitSemVersioning.sln");
 var target = Argument("do", "build");
 var configuration = Argument("configuration", "Release");
 
+// Azure and ACS configuration from environment variables
+var azureClientId = Argument("azureClientId", EnvironmentVariable("AZURE_CLIENT_ID") ?? PROVIDED_BY_GITHUB);
+var azureClientSecret = Argument("azureClientSecret", EnvironmentVariable("AZURE_CLIENT_SECRET") ?? PROVIDED_BY_GITHUB);
+var azureTenantId = Argument("azureTenantId", EnvironmentVariable("AZURE_TENANT_ID") ?? PROVIDED_BY_GITHUB);
+var acsClientScope = Argument("acsClientScope", EnvironmentVariable("ACS_CLIENT_SCOPE") ?? PROVIDED_BY_GITHUB);
+var acsApplicationId = Argument("acsApplicationId", EnvironmentVariable("ACS_APPLICATION_ID") ?? PROVIDED_BY_GITHUB);
+
 var testResultsDir = Directory("./TestResults");
 var assemblyInfo = ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs");
 var outputDir = Directory("./obj");
@@ -197,6 +204,11 @@ Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async
         Information($"ACS Registration skipped: {gitVersion.BranchName} with major version increment required.");
         return;
     }
+    else
+    {
+        Information($"Starting ACS Registration for Major Version Upgrade IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()}");
+        return;
+    }
 
     if (!isTokenValid || string.IsNullOrEmpty(azureAccessToken) || acsApplicationId.Equals(PROVIDED_BY_GITHUB))
     {
@@ -252,6 +264,11 @@ Task("GetAzureToken").Does(async () =>
     if (!IsMajorVersionUpgrade())
     {
         Information("GetAzureToken skipped: Major version not incremented.");
+        return;
+    }
+    else
+    {
+        Information($"Starting GetAzureToken IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()}");
         return;
     }
 
