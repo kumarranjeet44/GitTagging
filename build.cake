@@ -51,7 +51,7 @@ public string branchLabel = ""; // Dynamic branch label to be set in WiX Product
 
 if (gitVersion.BranchName == "develop") {
     branchLabel = "Alpha";
-    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource);
+    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource)+ "-" + suffix;
     completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
 else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")) {
@@ -249,7 +249,6 @@ Task("Tagmaster").Does(() => {
     {
         Information("🚀 MAJOR VERSION UPGRADE DETECTED!");
         Information("This indicates breaking changes or significant new features.");
-        // Add any special handling for major version upgrades here
     }
 
     //Sanity check
