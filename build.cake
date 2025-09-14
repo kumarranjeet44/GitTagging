@@ -10,7 +10,7 @@
 #tool "nuget:?package=Microsoft.CodeCoverage&version=16.9.4"
 #addin "nuget:?package=Newtonsoft.Json&version=13.0.1"
 using Cake.Common.Tools.GitVersion;
-using Newtonsoft.Json; 
+using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading;
 using Cake.Core.Text;
@@ -23,8 +23,8 @@ var githubRunAttempt = Argument("githubRunAttempt", "PROVIDED_BY_GITHUB");
 var githubRunNumber = Argument("githubRunNumber", "PROVIDED_BY_GITHUB");
 var devCycleBaseRunNumber = Argument("devCycleBaseRunNumber", EnvironmentVariable("DEV_CYCLE_BASE_RUN_NUMBER") ?? PROVIDED_BY_GITHUB);
 var enableDevMSI = Argument<bool>("enableDevMSI", false);
-var wixFile = Argument("wixFile","./GitSemVersioning.Setup/Product.wxs");
-var wixProjFile = Argument("wixProjFile","./GitSemVersioning.Setup/GitSemVersioning.Setup.wixproj");
+var wixFile = Argument("wixFile", "./GitSemVersioning.Setup/Product.wxs");
+var wixProjFile = Argument("wixProjFile", "./GitSemVersioning.Setup/GitSemVersioning.Setup.wixproj");
 var solution = Argument("solution", "./GitSemVersioning.sln");
 var target = Argument("do", "build");
 var configuration = Argument("configuration", "Release");
@@ -33,7 +33,7 @@ var testResultsDir = Directory("./TestResults");
 var assemblyInfo = ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs");
 var outputDir = Directory("./obj");
 
-var gitVersion = GitVersion(new GitVersionSettings {});
+var gitVersion = GitVersion(new GitVersionSettings { });
 var commitsSinceVersionSource = gitVersion.CommitsSinceVersionSource;
 var projectVersionNumber = gitVersion.MajorMinorPatch;
 List<string> allProjectAssemblyInfoPath = new List<string>();
@@ -49,27 +49,32 @@ public string completeAssemblyInformationalVersion = "";
 public string completeAssemblyVersion = "";
 public string branchLabel = ""; // Dynamic branch label to be set in WiX Product Name
 
-if (gitVersion.BranchName == "develop") {
+if (gitVersion.BranchName == "develop")
+{
     branchLabel = "Alpha";
-    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource)+ "-" + suffix;
+    completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-alpha.", commitsSinceVersionSource) + "-" + suffix;
     completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
-else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")) {
+else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/"))
+{
     branchLabel = "Beta";
     completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-beta.", commitsSinceVersionSource) + "-" + suffix;
     completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
-else if (gitVersion.BranchName.StartsWith("feature/")) {
+else if (gitVersion.BranchName.StartsWith("feature/"))
+{
     branchLabel = "Dev";
     completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-feature.", commitsSinceVersionSource) + "-" + suffix;
     completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
-else if (gitVersion.BranchName.StartsWith("bugfix/")) {
+else if (gitVersion.BranchName.StartsWith("bugfix/"))
+{
     branchLabel = "Dev";
     completeAssemblyInformationalVersion = string.Concat(projectVersionNumber, "-bugfix.", commitsSinceVersionSource) + "-" + suffix;
     completeAssemblyVersion = string.Concat(projectVersionNumber, ".", commitsSinceVersionSource);
 }
-else if (gitVersion.BranchName == "master") {
+else if (gitVersion.BranchName == "master")
+{
     branchLabel = "";
     completeAssemblyInformationalVersion = gitVersion.MajorMinorPatch;
     completeAssemblyVersion = gitVersion.MajorMinorPatch;
@@ -79,15 +84,17 @@ Information($"Branch: {gitVersion.BranchName} -> Label: '{branchLabel}'");
 Information($"completeAssemblyInformationalVersion: {completeAssemblyInformationalVersion}");
 Information($"completeAssemblyVersion: {completeAssemblyVersion}");
 
-Task("Clean").Does(() => {
-	CleanDirectories("./artifact");
+Task("Clean").Does(() =>
+{
+    CleanDirectories("./artifact");
     CleanDirectories("./TestResults");
-	CleanDirectories("**/bin/" + configuration);
-	CleanDirectories("**/obj/" + configuration);
+    CleanDirectories("**/bin/" + configuration);
+    CleanDirectories("**/obj/" + configuration);
 });
 
 Task("Restore")
-    .Does(() => {
+    .Does(() =>
+    {
         DotNetRestore("./GitSemVersioning.sln");
     });
 
@@ -156,36 +163,37 @@ Task("Test").ContinueOnError().Does(() =>
 
 });
 
- Task("SetProductNameInWix").ContinueOnError().Does(() => {
+Task("SetProductNameInWix").ContinueOnError().Does(() =>
+{
 
     Information($"Branch Label for Product Name in WiX : {branchLabel}");
     if (!System.IO.File.Exists(wixFile))
-     {
-         Error($"File not found: {wixFile}");
-         return;
-     }
-     
+    {
+        Error($"File not found: {wixFile}");
+        return;
+    }
+
     // Determine the new product name format
     string newProductName;
-     if (string.IsNullOrEmpty(branchLabel))
-     {
-         newProductName = $"$(var.ProductName) {gitVersion.MajorMinorPatch}"; 
-     }
-     else
-     {
-         newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)-{suffix}";
-     }
+    if (string.IsNullOrEmpty(branchLabel))
+    {
+        newProductName = $"$(var.ProductName) {gitVersion.MajorMinorPatch}";
+    }
+    else
+    {
+        newProductName = $"$(var.ProductName) {branchLabel} $(var.VERSION)-{suffix}";
+    }
 
-     // Update the WiX file to use dynamic product name
+    // Update the WiX file to use dynamic product name
     var currentProductNameInWix = "$(var.ProductName) $(var.VERSION)";
     var wixContent = System.IO.File.ReadAllText(wixFile);
     wixContent = wixContent.Replace($"Name=\"{currentProductNameInWix}\"", $"Name=\"{newProductName}\"");
     System.IO.File.WriteAllText(wixFile, wixContent);
 
     Information($"Replaced WiX product name pattern: {currentProductNameInWix} -> {newProductName}");
-});  
+});
 
-Task("SetVersionsInAssemblyFile").Does(() => 
+Task("SetVersionsInAssemblyFile").Does(() =>
 {
     GetAllAssemblyinfoPath();
     foreach (var path in allProjectAssemblyInfoPath)
@@ -205,16 +213,16 @@ public void ReplaceVersionInWix(string fileName, string searchWith, string repla
 //Get all project Assembly info Path
 public void GetAllAssemblyinfoPath()
 {
- // get the list of directories and subdirectories
-  var files = System.IO.Directory.EnumerateFiles("GitSemVersioning", "AssemblyInfo.cs", SearchOption.AllDirectories);
-  foreach (var path in files)
-  {
-   if(!path.Contains("Test"))
-   {
-      allProjectAssemblyInfoPath.Add(path);
-   }                
-  }         
-}   
+    // get the list of directories and subdirectories
+    var files = System.IO.Directory.EnumerateFiles("GitSemVersioning", "AssemblyInfo.cs", SearchOption.AllDirectories);
+    foreach (var path in files)
+    {
+        if (!path.Contains("Test"))
+        {
+            allProjectAssemblyInfoPath.Add(path);
+        }
+    }
+}
 
 // Function to check if current master tag major version is less than new major version
 bool IsMajorVersionUpgrade()
@@ -223,12 +231,12 @@ bool IsMajorVersionUpgrade()
     {
         var masterTags = GitTags(".").Where(tag => !tag.FriendlyName.Contains("-"));
         if (!masterTags.Any()) return false;
-        
+
         var latestVersion = masterTags
             .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
             .OrderByDescending(v => v)
             .First();
-        
+
         return gitVersion.Major > latestVersion.Major;
     }
     catch
@@ -237,7 +245,8 @@ bool IsMajorVersionUpgrade()
     }
 }
 
-Task("Tagmaster").Does(() => {
+Task("Tagmaster").Does(() =>
+{
     Information($"GitHub Run Number: {githubRunNumber}");
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
 
@@ -301,7 +310,7 @@ Task("Tagmaster").Does(() => {
             branchTag = $"v{gitVersion.MajorMinorPatch}-bugfix.{gitVersion.CommitsSinceVersionSource}-{suffix}";
         }
         else
-        { 
+        {
             branchTag = $"v{gitVersion.MajorMinorPatch}-feature.{gitVersion.CommitsSinceVersionSource}-{suffix}";
         }
     }
@@ -375,23 +384,26 @@ Task("UpdateWebToolVersion")
 
     Information("WebToolVersion updated to: " + projectVersionNumber);
 
-           // Optionally, print the file content after
-       Information("After update:");
-       Information(System.IO.File.ReadAllText(jsonPath));
-       // --- Add these lines to commit and push the changed assembly file from local host runner back to origin repo ---
-       StartProcess("git", new ProcessSettings {
-           Arguments = $"add \"{jsonPath}\""
-       });
-       StartProcess("git", new ProcessSettings {
-           Arguments = $"commit -m \"Update appsettings.Development.json version [CI skip]\"",
-           RedirectStandardOutput = true,
-           RedirectStandardError = true
-       });
-       StartProcess("git", new ProcessSettings {
-           Arguments = "push",
-           RedirectStandardOutput = true,
-           RedirectStandardError = true
-       });
+    // Optionally, print the file content after
+    Information("After update:");
+    Information(System.IO.File.ReadAllText(jsonPath));
+    // --- Add these lines to commit and push the changed assembly file from local host runner back to origin repo ---
+    StartProcess("git", new ProcessSettings
+    {
+        Arguments = $"add \"{jsonPath}\""
+    });
+    StartProcess("git", new ProcessSettings
+    {
+        Arguments = $"commit -m \"Update appsettings.Development.json version [CI skip]\"",
+        RedirectStandardOutput = true,
+        RedirectStandardError = true
+    });
+    StartProcess("git", new ProcessSettings
+    {
+        Arguments = "push",
+        RedirectStandardOutput = true,
+        RedirectStandardError = true
+    });
 });
 
 Task("full")
