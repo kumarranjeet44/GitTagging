@@ -209,7 +209,7 @@ Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async
     if (!gitVersion.BranchName.StartsWith("release/") || !IsMajorVersionUpgrade())
     {
         Information("ACSRegistrationForMajorUpgrade skipped: Both release branch and major version upgrade required.");
-        Information($"Branch : {gitVersion.BranchName} and IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()} : Major version not incremented.");
+        Information($"Branch : {gitVersion.BranchName} and IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()} : Not a release branch and Major version not incremented.");
         return;
     }
     else
