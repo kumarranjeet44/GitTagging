@@ -216,53 +216,54 @@ Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async
         return;
     }
 
-    if (!isTokenValid || string.IsNullOrEmpty(azureAccessToken) || acsApplicationId.Equals(PROVIDED_BY_GITHUB))
-    {
-        Error("Missing Azure token or ACS Application ID.");
-        throw new Exception("ACS Registration failed: Missing required authentication or configuration.");
-    }
+    //Uncomment below for real ACS registration
+    // if (!isTokenValid || string.IsNullOrEmpty(azureAccessToken) || acsApplicationId.Equals(PROVIDED_BY_GITHUB))
+    // {
+    //     Error("Missing Azure token or ACS Application ID.");
+    //     throw new Exception("ACS Registration failed: Missing required authentication or configuration.");
+    // }
 
-    try
-    {
-        using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
-        {
-            var request = new HttpRequestMessage(HttpMethod.Post,
-                $"https://uopacs.honeywell.com/api/registrations/automations?applicationId={acsApplicationId}&applicationVersion={gitVersion.MajorMinorPatch}");
-            request.Headers.Add("accept", "application/json");
-            request.Headers.Add("Authorization", $"Bearer {azureAccessToken}");
+    // try
+    // {
+    //     using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+    //     {
+    //         var request = new HttpRequestMessage(HttpMethod.Post,
+    //             $"https://uopacs.honeywell.com/api/registrations/automations?applicationId={acsApplicationId}&applicationVersion={gitVersion.MajorMinorPatch}");
+    //         request.Headers.Add("accept", "application/json");
+    //         request.Headers.Add("Authorization", $"Bearer {azureAccessToken}");
 
-            var response = await client.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
+    //         var response = await client.SendAsync(request);
+    //         var content = await response.Content.ReadAsStringAsync();
 
-            // Check if registration was successful, fail build if critical and failed
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorMessage = $"ACS Registration failed with status {response.StatusCode}: {content}";
-                Error(errorMessage);
+    //         // Check if registration was successful, fail build if critical and failed
+    //         if (!response.IsSuccessStatusCode)
+    //         {
+    //             var errorMessage = $"ACS Registration failed with status {response.StatusCode}: {content}";
+    //             Error(errorMessage);
 
-                var errorEntry = $"ACS FAILURE - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\nBranch: {gitVersion.BranchName}\nStatus: {response.StatusCode}\nResponse: {content}\n{new string('-', 50)}\n";
-                System.IO.File.AppendAllText(licenseclientKeyFile, errorEntry);
+    //             var errorEntry = $"ACS FAILURE - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\nBranch: {gitVersion.BranchName}\nStatus: {response.StatusCode}\nResponse: {content}\n{new string('-', 50)}\n";
+    //             System.IO.File.AppendAllText(licenseclientKeyFile, errorEntry);
 
-                throw new Exception(errorMessage);
-            }
+    //             throw new Exception(errorMessage);
+    //         }
 
-            var logEntry = $"ACS SUCCESS - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
-                          $"Branch: {gitVersion.BranchName}\n" +
-                          $"Status: {response.StatusCode}\n" +
-                          $"Response: {content}\n" +
-                          new string('-', 50) + "\n";
+    //         var logEntry = $"ACS SUCCESS - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+    //                       $"Branch: {gitVersion.BranchName}\n" +
+    //                       $"Status: {response.StatusCode}\n" +
+    //                       $"Response: {content}\n" +
+    //                       new string('-', 50) + "\n";
 
-            System.IO.File.AppendAllText(licenseclientKeyFile, logEntry);
-            Information("ACS Registration completed successfully.");
-        }
-    }
-    catch (Exception ex) when (!(ex is Exception && ex.Message.Contains("ACS Registration failed")))
-    {
-        var errorEntry = $"ACS ERROR - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\nError: {ex.Message}\n{new string('-', 50)}\n";
-        System.IO.File.AppendAllText(licenseclientKeyFile, errorEntry);
-        Error($"ACS Registration failed: {ex.Message}");
-        throw; // Re-throw to fail the build
-    }
+    //         System.IO.File.AppendAllText(licenseclientKeyFile, logEntry);
+    //         Information("ACS Registration completed successfully.");
+    //     }
+    // }
+    // catch (Exception ex) when (!(ex is Exception && ex.Message.Contains("ACS Registration failed")))
+    // {
+    //     var errorEntry = $"ACS ERROR - {DateTime.Now:yyyy-MM-dd HH:mm:ss}\nError: {ex.Message}\n{new string('-', 50)}\n";
+    //     System.IO.File.AppendAllText(licenseclientKeyFile, errorEntry);
+    //     Error($"ACS Registration failed: {ex.Message}");
+    //     throw; // Re-throw to fail the build
+    // }
 });
 
 Task("GetAzureToken").Does(async () =>
@@ -277,57 +278,57 @@ Task("GetAzureToken").Does(async () =>
         Information($"Starting GetAzureToken IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()}");
         return;
     }
+    //Uncomment below for real ACS registration
+    // // Validate environment variables
+    // if (azureClientId.Equals(PROVIDED_BY_GITHUB) || azureClientSecret.Equals(PROVIDED_BY_GITHUB) ||
+    //     azureTenantId.Equals(PROVIDED_BY_GITHUB) || acsClientScope.Equals(PROVIDED_BY_GITHUB))
+    // {
+    //     var errorMessage = "Missing Azure configuration. Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, ACS_CLIENT_SCOPE.";
+    //     Error(errorMessage);
+    //     isTokenValid = false;
+    //     throw new Exception(errorMessage);
+    // }
 
-    // Validate environment variables
-    if (azureClientId.Equals(PROVIDED_BY_GITHUB) || azureClientSecret.Equals(PROVIDED_BY_GITHUB) ||
-        azureTenantId.Equals(PROVIDED_BY_GITHUB) || acsClientScope.Equals(PROVIDED_BY_GITHUB))
-    {
-        var errorMessage = "Missing Azure configuration. Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, ACS_CLIENT_SCOPE.";
-        Error(errorMessage);
-        isTokenValid = false;
-        throw new Exception(errorMessage);
-    }
+    // try
+    // {
+    //     using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+    //     {
+    //         var request = new HttpRequestMessage(HttpMethod.Post, $"https://login.microsoftonline.com/{azureTenantId}/oauth2/v2.0/token");
+    //         request.Content = new FormUrlEncodedContent(new[] {
+    //             new KeyValuePair<string, string>("client_id", azureClientId),
+    //             new KeyValuePair<string, string>("scope", acsClientScope),
+    //             new KeyValuePair<string, string>("client_secret", azureClientSecret),
+    //             new KeyValuePair<string, string>("grant_type", "client_credentials")
+    //         });
 
-    try
-    {
-        using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
-        {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"https://login.microsoftonline.com/{azureTenantId}/oauth2/v2.0/token");
-            request.Content = new FormUrlEncodedContent(new[] {
-                new KeyValuePair<string, string>("client_id", azureClientId),
-                new KeyValuePair<string, string>("scope", acsClientScope),
-                new KeyValuePair<string, string>("client_secret", azureClientSecret),
-                new KeyValuePair<string, string>("grant_type", "client_credentials")
-            });
+    //         var response = await client.SendAsync(request);
 
-            var response = await client.SendAsync(request);
+    //         if (!response.IsSuccessStatusCode)
+    //         {
+    //             var errorContent = await response.Content.ReadAsStringAsync();
+    //             var errorMessage = $"Azure token request failed with status {response.StatusCode}: {errorContent}";
+    //             Error(errorMessage);
+    //             isTokenValid = false;
+    //             azureAccessToken = "";
+    //             throw new Exception(errorMessage);
+    //         }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                var errorMessage = $"Azure token request failed with status {response.StatusCode}: {errorContent}";
-                Error(errorMessage);
-                isTokenValid = false;
-                azureAccessToken = "";
-                throw new Exception(errorMessage);
-            }
+    //         azureTokenResponse = await response.Content.ReadAsStringAsync();
+    //         var tokenData = JsonConvert.DeserializeObject<dynamic>(azureTokenResponse);
+    //         azureAccessToken = tokenData.access_token;
+    //         isTokenValid = true;
 
-            azureTokenResponse = await response.Content.ReadAsStringAsync();
-            var tokenData = JsonConvert.DeserializeObject<dynamic>(azureTokenResponse);
-            azureAccessToken = tokenData.access_token;
-            isTokenValid = true;
-
-            Information("Azure token retrieved successfully.");
-        }
-    }
-    catch (Exception ex) when (!(ex.Message.Contains("Azure token request failed") || ex.Message.Contains("Missing Azure configuration")))
-    {
-        var errorMessage = $"Azure token acquisition failed: {ex.Message}";
-        Error(errorMessage);
-        isTokenValid = false;
-        azureAccessToken = "";
-        throw new Exception(errorMessage);
-    }
+    //         Information("Azure token retrieved successfully.");
+    //     }
+    // }
+    // catch (Exception ex) when (!(ex.Message.Contains("Azure token request failed") || ex.Message.Contains("Missing Azure configuration")))
+    // {
+    //     var errorMessage = $"Azure token acquisition failed: {ex.Message}";
+    //     Error(errorMessage);
+    //     isTokenValid = false;
+    //     azureAccessToken = "";
+    //     throw new Exception(errorMessage);
+    // }
 });
 
 // Function to check if current master tag major version is less than new major version
@@ -350,6 +351,52 @@ bool IsMajorVersionUpgrade()
         return false;
     }
 }
+
+//Execute this task only if release branch and major version increased
+Task("UpdateKeyFileToOrigin")
+   .Does(() =>
+   {
+       if (gitVersion.BranchName == "master" || gitVersion.BranchName == "develop" || gitVersion.BranchName.StartsWith("hotfix/") || gitVersion.BranchName.StartsWith("feature/") || !IsMajorVersionUpgrade())
+       {
+           Information($"Current branch '{gitVersion.BranchName}' is not release branch and IsMajorVersionUpgrade is {IsMajorVersionUpgrade()}. Skip updating key file to origin.");
+           return;
+       }
+
+       if (!System.IO.File.Exists(licenseclientKeyFile))
+       {
+           Error($"File not found: {licenseclientKeyFile}");
+           return;
+       }
+       Information($"Updating key file back to origin :: {licenseclientKeyFile}");
+
+       //Add these lines to commit and push the changed licenseclientKeyFile from local host runner back to origin repo
+       StartProcess("git", new ProcessSettings
+       {
+           Arguments = $"add \"{licenseclientKeyFile}\""
+       });
+       StartProcess("git", new ProcessSettings
+       {
+           Arguments = $"commit -m \"Update {licenseclientKeyFile}\"",
+           RedirectStandardOutput = true,
+           RedirectStandardError = true
+       });
+       var updateKeyFileResult = StartProcess("git", new ProcessSettings
+       {
+           Arguments = "push",
+           RedirectStandardOutput = true,
+           RedirectStandardError = true
+       });
+       // Log output for debugging
+       if (updateKeyFileResult != 0)
+       {
+           Error("Failed to update licenseclientKeyFile to origin.");
+           Environment.Exit(1);
+       }
+       else
+       {
+           Information("licenseclientKeyFile successfully updated to origin.");
+       }
+   });
 
 Task("SetVersionsInAssemblyFile").Does(() =>
 {
@@ -549,6 +596,6 @@ Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
-    .IsDependentOn("Tagmaster")
-    .IsDependentOn("UpdateKeyFileToOrigin");
+    .IsDependentOn("Tagmaster");
+    //.IsDependentOn("UpdateKeyFileToOrigin");
 RunTarget(target);
