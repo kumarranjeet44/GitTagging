@@ -205,9 +205,11 @@ Task("SetProductNameInWix").ContinueOnError().Does(() =>
 Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async () =>
 {
 
-    if (!IsMajorVersionUpgrade())
+    // Check if both conditions are met: release branch and major version upgrade
+    if (!gitVersion.BranchName.StartsWith("release/") || !IsMajorVersionUpgrade())
     {
-        Information($"IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()}  ACS Registration skipped: {gitVersion.BranchName} with major version increment required.");
+        Information("ACSRegistrationForMajorUpgrade skipped: Both release branch and major version upgrade required.");
+        Information($"Branch : {gitVersion.BranchName} and IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()} : Major version not incremented.");
         return;
     }
     else
@@ -268,9 +270,11 @@ Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async
 
 Task("GetAzureToken").Does(async () =>
 {
-    if (!IsMajorVersionUpgrade())
+    // Check if both conditions are met: release branch and major version upgrade
+    if (!gitVersion.BranchName.StartsWith("release/") || !IsMajorVersionUpgrade())
     {
-        Information($"IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()}  GetAzureToken skipped: Major version not incremented.");
+        Information("GetAzureToken skipped: Both release branch and major version upgrade required.");
+        Information($"Branch : {gitVersion.BranchName} and IsMajorVersionUpgrade ---> {IsMajorVersionUpgrade()} : Major version not incremented.");
         return;
     }
     else
@@ -331,7 +335,8 @@ Task("GetAzureToken").Does(async () =>
     // }
 });
 
-// Function to check if current master tag major version is less than new major version
+// Function to check if current master tag major version is less than new major version, modify this function so that is can also check alpha/beta tags
+// alpha and beta tags may have major version increment, so need to check those tags also, so check develop, release, hotfix, bugfix and feature branches not just master branch
 bool IsMajorVersionUpgrade()
 {
     try
@@ -339,11 +344,18 @@ bool IsMajorVersionUpgrade()
         var masterTags = GitTags(".").Where(tag => !tag.FriendlyName.Contains("-"));
         if (!masterTags.Any()) return false;
 
+        Information("Available master tags:");
+        foreach (var tag in masterTags)
+        {
+            Information($"Tag: {tag.FriendlyName}");
+        }
+
         var latestVersion = masterTags
             .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
             .OrderByDescending(v => v)
             .First();
         Information($"Current MajorMinorPatch: {gitVersion.MajorMinorPatch}  ---> {latestVersion}");
+
         return gitVersion.Major > latestVersion.Major;
     }
     catch
