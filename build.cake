@@ -448,16 +448,6 @@ Task("Tagmaster").Does(() =>
     Information($"GitHub Run Number: {githubRunNumber}");
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
 
-    // Check if this is a major version upgrade
-    bool isMajorUpgrade = IsMajorVersionUpgrade();
-    Information($"Is Major Version Upgrade: {isMajorUpgrade}");
-
-    if (isMajorUpgrade)
-    {
-        Information("🚀 MAJOR VERSION UPGRADE DETECTED!");
-        Information("This indicates breaking changes or significant new features.");
-    }
-
     //Sanity check
     var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
     if (!isGitHubActions)
