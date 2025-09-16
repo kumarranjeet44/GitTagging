@@ -342,7 +342,7 @@ bool IsMajorVersionUpgrade()
             .Select(tag => System.Version.Parse(tag.FriendlyName.TrimStart('v')))
             .OrderByDescending(v => v)
             .First();
-        Information($"MajorMinorPatch: {gitVersion.MajorMinorPatch}  ---> {latestVersion}");
+        Information($"Current MajorMinorPatch: {gitVersion.MajorMinorPatch}  ---> {latestVersion}");
         return gitVersion.Major > latestVersion.Major;
     }
     catch
@@ -549,5 +549,6 @@ Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
-    .IsDependentOn("Tagmaster");
+    .IsDependentOn("Tagmaster")
+    .IsDependentOn("UpdateKeyFileToOrigin");
 RunTarget(target);
