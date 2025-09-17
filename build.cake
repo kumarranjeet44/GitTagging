@@ -459,10 +459,9 @@ Task("Tagmaster").Does(() =>
     //List and check existing tags
     Information($"Current branch {gitVersion.BranchName}");
 
-    //comment below line to consider all branches
-    if (gitVersion.BranchName != "master" && gitVersion.BranchName != "develop" && !gitVersion.BranchName.StartsWith("release/") && !gitVersion.BranchName.StartsWith("hotfix/") && !enableDevMSI)
+    if (!enableDevMSI && (gitVersion.BranchName.StartsWith("feature/") || gitVersion.BranchName.StartsWith("bugfix/")))
     {
-        Information($"Current branch '{gitVersion.BranchName}' is not master/develop/releaes/hotfix/enableDevMSI(True). Skip tagging.");
+        Information($"Building in feature or bugfix branch and  enableDevMSI is {enableDevMSI}, will skip Artifact Generic push.");
         return;
     }
     if (string.IsNullOrEmpty(gitUserName) || string.IsNullOrEmpty(gitUserPassword) ||
