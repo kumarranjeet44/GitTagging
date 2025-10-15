@@ -456,6 +456,25 @@ Task("Tagmaster").Does(() =>
         return;
     }
 
+    
+    // Check for multiple release branches
+    Information("Checking for multiple release branches...");
+    var releaseBranches = GitBranches(".", true)
+        .Where(b => b.FriendlyName.StartsWith("origin/release/"))
+        .ToList();
+    
+    Information($"Found {releaseBranches.Count} release branches:");
+    foreach(var branch in releaseBranches)
+    {
+        Information($"  - {branch.FriendlyName}");
+    }
+    
+    if(releaseBranches.Count > 1)
+    {
+        Error($"Multiple release branches detected ({releaseBranches.Count}). Only one release branch should exist at a time.");
+        throw new Exception($"Build failed: Multiple release branches found. Please consolidate to a single release branch.");
+    }
+
     //List and check existing tags
     Information($"Current branch {gitVersion.BranchName}");
 
