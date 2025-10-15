@@ -202,7 +202,7 @@ Task("SetProductNameInWix").ContinueOnError().Does(() =>
     Information($"Replaced WiX product name pattern: {currentProductNameInWix} -> {newProductName}");
 });
 
-Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async () =>
+Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(() =>
 {
 
     // Check if both conditions are met: release branch and major version upgrade
@@ -268,7 +268,7 @@ Task("ACSRegistrationForMajorUpgrade").IsDependentOn("GetAzureToken").Does(async
     // }
 });
 
-Task("GetAzureToken").Does(async () =>
+Task("GetAzureToken").Does(() =>
 {
     // Check if both conditions are met: release branch and major version upgrade
     if (!gitVersion.BranchName.StartsWith("release/") || !IsMajorVersionUpgrade())
@@ -459,7 +459,7 @@ Task("Tagmaster").Does(() =>
     
     // Check for multiple release branches
     Information("Checking for multiple release branches...");
-    var releaseBranches = GitBranches(".", true)
+    var releaseBranches = GitBranches(".")
         .Where(b => b.FriendlyName.StartsWith("origin/release/"))
         .ToList();
     
