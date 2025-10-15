@@ -471,7 +471,7 @@ Task("Tagmaster").Does(() =>
     
     if(releaseBranches.Count > 1)
     {
-        Error($"Multiple release branches detected ({releaseBranches.Count}). Only one release branch should exist at a time.");
+        Error($"Multiple release branches detected ({releaseBranches.Count}). Only one release branch should exist at a time.Please consolidate to a single release branch.");
         throw new Exception($"Build failed: Multiple release branches found. Please consolidate to a single release branch.");
     }
 
