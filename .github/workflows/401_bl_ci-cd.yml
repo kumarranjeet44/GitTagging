@@ -16,7 +16,7 @@ env:
   gitusername: kumarranjeet44
   gituserpassword: "${{ secrets.GIT_PAT  }}"
   #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
-  DEV_CYCLE_BASE_RUN_NUMBER: 235
+  DEV_CYCLE_BASE_RUN_NUMBER: 236
   enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory
 # Azure and ACS configuration
   AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
