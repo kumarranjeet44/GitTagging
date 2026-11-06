@@ -27,14 +27,13 @@ env:
 jobs:
   Build-401-BL-Continuous-Integration:
     runs-on: self-hosted
-    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    if: true # set if condition to false to skip the current job
     defaults:
       run:
         shell: cmd
     steps:
     - uses: actions/checkout@v4.1.0
       with: 
-        token: ${{ secrets.RELEASE_TOKEN }}
         fetch-depth: 0
         persist-credentials: true
     - name: Reset build agent
