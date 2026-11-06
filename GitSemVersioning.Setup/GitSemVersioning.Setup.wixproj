@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputName>GitSemVersioning</OutputName>
     <InstallerPlatform>x64</InstallerPlatform>
+    <SuppressValidation>true</SuppressValidation>
     <PublishDir>$(MSBuildProjectDirectory)\..\artifact\publish\</PublishDir>
     <DefineConstants>PublishDir=$(PublishDir);ProductVersion=$(ProductVersion)</DefineConstants>
   </PropertyGroup>
