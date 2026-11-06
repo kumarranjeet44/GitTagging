@@ -28,10 +28,11 @@ var githubRunNumber = Argument("githubRunNumber", "PROVIDED_BY_GITHUB");
 var devCycleBaseRunNumber = Argument("devCycleBaseRunNumber", EnvironmentVariable("DEV_CYCLE_BASE_RUN_NUMBER") ?? PROVIDED_BY_GITHUB);
 var enableDevMSI = Argument<bool>("enableDevMSI", false);
 var wixFile = Argument("wixFile", "./GitSemVersioning.Setup/Product.wxs");
-var wixProjFile = Argument("wixProjFile", "./GitSemVersioning.Setup/GitSemVersioning.Setup.wixproj");
 var solution = Argument("solution", "./GitSemVersioning.sln");
 var target = Argument("do", "build");
 var configuration = Argument("configuration", "Release");
+var msiPath = Directory("./artifact");
+var msiFullPath = new FilePath($"./GitSemVersioning.Setup/bin/{configuration}/GitSemVersioning.msi");
 
 // Azure and ACS configuration from environment variables
 var azureClientId = Argument("azureClientId", EnvironmentVariable("AZURE_CLIENT_ID") ?? PROVIDED_BY_GITHUB);
@@ -42,7 +43,6 @@ var acsApplicationId = Argument("acsApplicationId", EnvironmentVariable("ACS_APP
 
 var testResultsDir = Directory("./TestResults");
 var assemblyInfo = ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs");
-var outputDir = Directory("./obj");
 var licenseclientKeyFile = ""; //Argument("licenseclientKeyFile", $"{sourceDir}/{projectName}/uop.acs.licenseclient.key");
 
 //
@@ -111,65 +111,23 @@ Task("Restore")
 // before build execute ACS registration task as it is required to update the licenseclient file if production tag major version increased
 Task("Build").IsDependentOn("Restore").IsDependentOn("ACSRegistrationForMajorUpgrade").IsDependentOn("SetVersionsInAssemblyFile").IsDependentOn("SetProductNameInWix").Does(() =>
 {
-    Information($"Updated AssemblyVersion(AssemblyInfo.cs) to be use in WiX as Version: {ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs").AssemblyVersion}");
-    Information($"Updated AssemblyInformationalVersion(AssemblyInfo.cs) as: {ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs").AssemblyInformationalVersion}");
-
-    DotNetBuild("./GitSemVersioning.sln", new DotNetBuildSettings
+    Information($"Complete Assembly Informational Version: {completeAssemblyInformationalVersion}");
+    Information($"Complete Assembly Version: {completeAssemblyVersion}");
+    var settings = new MSBuildSettings
     {
-        Configuration = configuration,
-        OutputDirectory = outputDir
-    });
+        Configuration = configuration
+    };
+    MSBuild(solution, settings);
 
-});
-
-// Note: ContinueOnError for test Task to allow Bamboo capture TestResults produced and halt pipeline from there.
-Task("Test").ContinueOnError().Does(() =>
-{
-    var testProjects = GetFiles("./**/*.Test.csproj");
-    foreach (var project in testProjects)
+    EnsureDirectoryExists(msiPath);
+    if (gitVersion.BranchName != "master")
     {
-        var projectName = project.GetFilenameWithoutExtension();
-        var testSettings = new DotNetTestSettings
-        {
-            Loggers = new[] { $"trx;LogFileName={projectName}.trx" },
-            ArgumentCustomization = args => args
-                .Append("--collect:\"XPlat Code Coverage\"")
-                .Append("/p:CollectCoverage=true")
-                .Append("-- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover")
-        };
-        DotNetTest(project.FullPath, testSettings);
+        MoveFile(msiFullPath, msiPath.Path.FullPath + $"/GitSemVersioning.Setup.{completeAssemblyInformationalVersion}.msi");
     }
-
-    // Copy Test Results and Coverage Reports
-    var testResultsDir = Directory("./TestResults");
-    var coverageResultsDir = Directory("./CoverageResults");
-    EnsureDirectoryExists(testResultsDir);
-    EnsureDirectoryExists(coverageResultsDir);
-
-    var trxFiles = GetFiles("./**/*.trx");
-    foreach (var file in trxFiles)
+    else
     {
-        CopyFileToDirectory(file, testResultsDir);
+        MoveFile(msiFullPath, msiPath.Path.FullPath + $"/GitSemVersioning.Setup.{completeAssemblyVersion}.msi");
     }
-
-    var coverageFiles = GetFiles("./**/coverage*.xml");
-    foreach (var file in coverageFiles)
-    {
-        CopyFileToDirectory(file, coverageResultsDir);
-    }
-
-    Information("Test Results:");
-    foreach (var file in GetFiles(testResultsDir.Path.FullPath + "/*.trx"))
-    {
-        Information(file.FullPath);
-    }
-
-    Information("Coverage Results:");
-    foreach (var file in GetFiles(coverageResultsDir.Path.FullPath + "/*.xml"))
-    {
-        Information(file.FullPath);
-    }
-
 });
 
 Task("SetProductNameInWix").ContinueOnError().Does(() =>
@@ -559,63 +517,10 @@ Task("Tagmaster").Does(() =>
     }
 });
 
-Task("UpdateWebToolVersion")
-    .Does(() =>
-{
-    var jsonPath = "./GitSemVersioning/appsettings.Development.json";
-    if (!System.IO.File.Exists(jsonPath))
-    {
-        Error($"File not found: {jsonPath}");
-        return;
-    }
-
-    Information($"Updating WebToolVersion in {jsonPath}");
-
-    // Read and parse JSON
-    var jsonContent = System.IO.File.ReadAllText(jsonPath);
-    dynamic jsonObj = JsonConvert.DeserializeObject(jsonContent);
-
-    // Update the WebToolVersion property
-    jsonObj.WebToolVersion = gitVersion.BranchName == "master"
-        ? projectVersionNumber.ToString()
-        : (!string.IsNullOrEmpty(gitVersion.PreReleaseLabel)
-            ? char.ToUpper(gitVersion.PreReleaseLabel[0]) + gitVersion.PreReleaseLabel.Substring(1) + " "
-            : "")
-        + completeAssemblyInformationalVersion.ToString();
-
-
-    // Write back to file
-    var updatedJson = JsonConvert.SerializeObject(jsonObj, Formatting.Indented);
-    System.IO.File.WriteAllText(jsonPath, updatedJson);
-
-    Information("WebToolVersion updated to: " + projectVersionNumber);
-
-    // Optionally, print the file content after
-    Information("After update:");
-    Information(System.IO.File.ReadAllText(jsonPath));
-    // --- Add these lines to commit and push the changed assembly file from local host runner back to origin repo ---
-    StartProcess("git", new ProcessSettings
-    {
-        Arguments = $"add \"{jsonPath}\""
-    });
-    StartProcess("git", new ProcessSettings
-    {
-        Arguments = $"commit -m \"Update appsettings.Development.json version [CI skip]\"",
-        RedirectStandardOutput = true,
-        RedirectStandardError = true
-    });
-    StartProcess("git", new ProcessSettings
-    {
-        Arguments = "push",
-        RedirectStandardOutput = true,
-        RedirectStandardError = true
-    });
-});
 
 Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
-    //.IsDependentOn("Test")
     .IsDependentOn("Tagmaster");
     //.IsDependentOn("UpdateKeyFileToOrigin");
 RunTarget(target);
