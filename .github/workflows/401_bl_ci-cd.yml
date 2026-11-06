@@ -41,7 +41,9 @@ jobs:
     - name: Reset build agent
       run: dotnet build-server shutdown
     - name: Restore CICD Tools
-      run: dotnet tool restore         
+      run: dotnet tool restore  
+    - name: Mark workspace as safe for Git
+      run: git config --global --add safe.directory "*"      
     - name: Build, Tests and Tag
       working-directory: ${{ github.workspace }}
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }} --githubRunAttempt=${{ github.run_attempt }}
