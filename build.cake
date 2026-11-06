@@ -514,14 +514,14 @@ Task("Setaisenvironment").Does(() =>
     if (gitVersion.BranchName.StartsWith("release/"))
     {
         Information("Building in release branch, aisclient.config AIS_ENVIRONMENT variable value updated from DEV to QA");
-        ReplaceString("src/Honeywell.UOP.MSD/aisclient.config", "DEV", "QA");
+        ReplaceString("GitSemVersioning/aisclient.config", "DEV", "QA");
         return;
     }
 
     if (gitVersion.BranchName == "master" || gitVersion.BranchName.StartsWith("hotfix/"))
     {
         Information("Building in master/hotfix branch, aisclient.config AIS_ENVIRONMENT variable value updated from DEV to PROD");
-        ReplaceString("src/Honeywell.UOP.MSD/aisclient.config", "DEV", "PROD");
+        ReplaceString("GitSemVersioning/aisclient.config", "DEV", "PROD");
         return;
     }
 
