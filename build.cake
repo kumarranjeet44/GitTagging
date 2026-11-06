@@ -1,16 +1,8 @@
 #tool "nuget:?package=NuGet.CommandLine&version=5.5.1"
 #tool "nuget:?package=GitVersion.CommandLine&version=5.3.5"
-#tool "nuget:?package=MSBuild.SonarQube.Runner.Tool&version=4.6.0"
-#tool "nuget:?package=OpenCover&version=4.7.922"
-#tool "nuget:?package=Microsoft.TestPlatform&version=16.6.1"
-#tool nuget:?package=JetBrains.dotCover.CommandLineTools&version=2021.1.2
-#tool "nuget:?package=Microsoft.CodeCoverage&version=16.9.4"
-#tool "nuget:?package=dotnet-sonarscanner&version=10.1.2"
-#addin "nuget:?package=Cake.Sonar&version=1.1.25"
 #addin "nuget:?package=Cake.Curl&version=4.1.0"
 #addin "nuget:?package=Cake.Git&version=1.0.1"
 #addin "nuget:?package=Cake.Incubator&version=6.0.0"
-#addin "nuget:?package=Cake.SonarResults&version=0.3.7535.30400&loaddependencies=true"
 #addin "nuget:?package=Cake.FileHelpers&version=4.0.1"
 #addin "nuget:?package=Newtonsoft.Json&version=9.0.1&prerelease"
 
@@ -19,7 +11,6 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
-using Cake.SonarResults.Models;
 using System.Text.RegularExpressions;
 using System.IO;
 
@@ -37,12 +28,9 @@ var acsApplicationId = Argument("acsApplicationId", EnvironmentVariable("ACS_APP
 
 var target = Argument("do", "full");
 var configuration = Argument("configuration", "Release");
-var sonarProject = Argument("sonarproject", "UOPMSD");
 var projectName = Argument("projectName", "Honeywell.UOP.MSD");
-var testProjectName = Argument("testProjectName", "Honeywell.UOP.MSDTest");
 var enableDevMSI = Argument<bool>("enableDevMSI", false);
 var enableDevTag = Argument<bool>("enableDevTag", false);
-var sonarApiKey = Argument("sonarapikey", PROVIDED_BY_GITHUB);
 var githubRunNumber = Argument("githubRunNumber", PROVIDED_BY_GITHUB);
 var gitUserName = Argument("gitusername", PROVIDED_BY_GITHUB);
 var gitUserPassword = Argument("gituserpassword", PROVIDED_BY_GITHUB);
@@ -633,33 +621,6 @@ public (string branchLabel, string assemblyVersion) SetBranchLabelAndVersion(Git
 }
 
 
-
-public class Rootobject
-{
-    public Task task { get; set; }
-}
-
-public class Task
-{
-    public string id { get; set; }
-    public string type { get; set; }
-    public string componentId { get; set; }
-    public string componentKey { get; set; }
-    public string componentName { get; set; }
-    public string componentQualifier { get; set; }
-    public string analysisId { get; set; }
-    public string status { get; set; }
-    public DateTime submittedAt { get; set; }
-    public string submitterLogin { get; set; }
-    public DateTime startedAt { get; set; }
-    public DateTime executedAt { get; set; }
-    public int executionTimeMs { get; set; }
-    public bool hasScannerContext { get; set; }
-    public string branch { get; set; }
-    public string branchType { get; set; }
-    public int warningCount { get; set; }
-    public object[] warnings { get; set; }
-}
 
 Task("Full")
     .IsDependentOn("Clean")
