@@ -22,7 +22,7 @@ public static string azureTokenResponse = "";
 public static bool isTokenValid = false;
 
 var gitUserName = Argument("gitusername", "PROVIDED_BY_GITHUB");
-var gitUserPassword = Argument("gituserpassword", "PROVIDED_BY_GITHUB");
+var gitUserPassword = Argument("gituserpassword", EnvironmentVariable("gituserpassword") ?? PROVIDED_BY_GITHUB);
 var githubRunAttempt = Argument("githubRunAttempt", "PROVIDED_BY_GITHUB");
 var githubRunNumber = Argument("githubRunNumber", "PROVIDED_BY_GITHUB");
 var devCycleBaseRunNumber = Argument("devCycleBaseRunNumber", EnvironmentVariable("DEV_CYCLE_BASE_RUN_NUMBER") ?? PROVIDED_BY_GITHUB);
