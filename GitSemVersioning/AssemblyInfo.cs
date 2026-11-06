@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -41,7 +41,7 @@ using System.Windows;
 //      Build Number
 //      Revision
 
-[assembly: AssemblyVersion("8.3.0.12")]
-[assembly: AssemblyFileVersion("8.3.0.12")]
-[assembly: AssemblyInformationalVersion("8.3.0-alpha.12")]
+[assembly: AssemblyVersion("10.6.0.4")]
+[assembly: AssemblyFileVersion("10.6.0.4")]
+[assembly: AssemblyInformationalVersion("10.6.0-alpha.4-PROVIDED_BY_GITHUB")]
 

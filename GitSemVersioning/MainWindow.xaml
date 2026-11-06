@@ -1,0 +1,34 @@
+<Window x:Class="GitSemVersioning.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Git SemVersioning"
+        Width="760"
+        Height="480"
+        MinWidth="560"
+        MinHeight="360"
+        WindowStartupLocation="CenterScreen"
+        Background="#F4F6F8">
+    <Grid>
+        <Border Margin="36"
+                Padding="40"
+                Background="White"
+                BorderBrush="#D9E0E7"
+                BorderThickness="1"
+                CornerRadius="6">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Git SemVersioning"
+                           FontSize="30"
+                           FontWeight="SemiBold"
+                           Foreground="#17324D" />
+                <TextBlock Margin="0,18,0,0"
+                           Text="Welcome"
+                           FontSize="20"
+                           Foreground="#263746" />
+                <TextBlock Margin="0,8,0,0"
+                           Text="The Windows desktop application is ready."
+                           FontSize="14"
+                           Foreground="#526474" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
