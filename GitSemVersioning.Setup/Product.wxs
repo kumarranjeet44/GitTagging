@@ -1,21 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-  <Package Name="Git SemVersioning"
-           Manufacturer="Honeywell"
-           Version="$(var.ProductVersion)"
-           UpgradeCode="{1F7201A3-42BF-4D17-BF4C-2958738F3DE0}"
-           Scope="perMachine">
+  <Package Name="Git SemVersioning Alpha 10.6.0-1" Manufacturer="Honeywell" Version="10.6.0" UpgradeCode="{1F7201A3-42BF-4D17-BF4C-2958738F3DE0}" Scope="perMachine">
     <MajorUpgrade DowngradeErrorMessage="A newer version of Git SemVersioning is already installed." />
     <MediaTemplate EmbedCab="yes" />
-
     <Feature Id="Main" Title="Git SemVersioning" Level="1">
       <ComponentGroupRef Id="AppFiles" />
     </Feature>
-
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="Git SemVersioning" />
     </StandardDirectory>
   </Package>
-
   <Fragment>
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
       <Files Include="$(var.PublishDir)**" />
