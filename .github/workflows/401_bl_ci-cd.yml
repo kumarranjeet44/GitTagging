@@ -38,6 +38,7 @@ jobs:
       with: 
         fetch-depth: 0
         persist-credentials: true
+        path: 'w'
     - name: Reset build agent
       run: dotnet build-server shutdown
     - name: Restore CICD Tools
