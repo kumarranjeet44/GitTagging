@@ -6,7 +6,7 @@
     <DefineConstants>PublishDir=$(PublishDir);ProductVersion=$(ProductVersion)</DefineConstants>
   </PropertyGroup>
 
-  <Target Name="PublishDesktopApp" BeforeTargets="Build">
+  <Target Name="PublishDesktopApp" BeforeTargets="CoreCompile">
     <Exec Command="dotnet publish &quot;$(MSBuildProjectDirectory)\..\GitSemVersioning\GitSemVersioning.csproj&quot; --configuration $(Configuration) --runtime win-x64 --self-contained true --output &quot;$(PublishDir)&quot;" />
   </Target>
 </Project>

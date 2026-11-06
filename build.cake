@@ -75,7 +75,7 @@ Task("Clean").Does(() =>
 
 Task("Restore").Does(() =>
 {
-    NuGetRestore(solutionFile, new NuGetRestoreSettings { NoCache = true });
+    DotNetRestore(solutionFile);
 });
 
 // Before Build, execute SetVersionsInAssemblyFile and SetProductNameInWix to update Product version and Product Name in WiX file
@@ -115,7 +115,7 @@ Task("SetVersionsInAssemblyFile").Does(() =>
     }
 });
 
-Task("SetProductNameInWix").ContinueOnError().Does(() =>
+Task("SetProductNameInWix").Does(() =>
 {
     Information($"Branch: {gitVersion.BranchName} -> Branch Label for Product Name in WiX: {branchLabelInWixProductName}");
 
