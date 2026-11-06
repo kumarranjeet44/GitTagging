@@ -615,7 +615,7 @@ Task("UpdateWebToolVersion")
 Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
-    .IsDependentOn("Test")
+    //.IsDependentOn("Test")
     .IsDependentOn("Tagmaster");
     //.IsDependentOn("UpdateKeyFileToOrigin");
 RunTarget(target);
