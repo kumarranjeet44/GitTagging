@@ -11,7 +11,7 @@ env:
   proj_build_temp: Publish
   vstest: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"'
   gitusername: kumarranjeet44
-  gituserpassword: "${{ secrets.GIT_PAT }}"
+  gituserpassword: "Git@2027"
   #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
   DEV_CYCLE_BASE_RUN_NUMBER: 235
   enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory..
@@ -31,50 +31,13 @@ jobs:
       run:
         shell: cmd
     steps:
-    - name: Ensure Git is available to checkout
-      shell: powershell
-      run: |
-        $ErrorActionPreference = 'Stop'
-        $git = Get-Command git.exe -ErrorAction SilentlyContinue
-        if (-not $git) {
-          $candidates = @(
-            "$env:ProgramFiles\Git\cmd\git.exe",
-            "${env:ProgramFiles(x86)}\Git\cmd\git.exe",
-            "$env:LOCALAPPDATA\Programs\Git\cmd\git.exe"
-          )
-          $gitPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $gitPath) {
-            throw 'Git was not found. Add the installed Git cmd directory to the runner PATH.'
-          }
-        } else {
-          $gitPath = $git.Source
-        }
-        $version = & $gitPath --version
-        if ($LASTEXITCODE -ne 0 -or $version -notmatch 'git version (\d+\.\d+\.\d+)') {
-          throw 'Cannot determine the installed Git version.'
-        }
-        if ([version]$Matches[1] -lt [version]'2.18.0') {
-          throw 'actions/checkout requires Git 2.18 or newer.'
-        }
-        Split-Path $gitPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        Write-Output $version
     - uses: actions/checkout@v4.1.0
       with: 
         fetch-depth: 0
         persist-credentials: true
-    - name: Verify Git checkout
-      shell: powershell
-      working-directory: ${{ github.workspace }}
-      run: |
-        if (-not (Test-Path .git)) {
-          throw 'Checkout did not create Git metadata. GitVersion cannot run on an archive download.'
-        }
-        git rev-parse --verify HEAD
-        if ($LASTEXITCODE -ne 0) { throw 'Checkout has no valid Git HEAD.' }
     - name: Reset build agent
       run: dotnet build-server shutdown
     - name: Restore CICD Tools
       run: dotnet tool restore      
     - name: Build, Tests and Tag
-      working-directory: ${{ github.workspace }}
-      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --githubRunNumber=${{ github.run_number }} --githubRunAttempt=${{ github.run_attempt }}
+      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }} --githubRunAttempt=${{ github.run_attempt }}
