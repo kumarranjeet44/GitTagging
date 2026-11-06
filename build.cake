@@ -2,7 +2,6 @@
 #tool "nuget:?package=GitVersion.CommandLine&version=5.3.5"
 #addin "nuget:?package=Cake.Curl&version=4.1.0"
 #addin "nuget:?package=Cake.Git&version=1.0.1"
-#addin "nuget:?package=Cake.Incubator&version=6.0.0"
 #addin "nuget:?package=Cake.FileHelpers&version=4.0.1"
 #addin "nuget:?package=Newtonsoft.Json&version=9.0.1&prerelease"
 
@@ -39,9 +38,9 @@ var devCycleBaseRunNumber = Argument("devCycleBaseRunNumber", EnvironmentVariabl
 
 
 var solutionFile = Argument("solution", "./GitSemVersioning.sln");
-var sourceDir = Argument("sourceDir", "./src");
-var assemblyInfoPath = Argument("assemblyInfoPath", $"{sourceDir}/{projectName}/Properties/AssemblyInfo.cs");
-var licenseclientKeyFile = Argument("licenseclientKeyFile", $"{sourceDir}/{projectName}/uop.acs.licenseclient.key");
+var sourceDir = Argument("sourceDir", "./GitSemVersioning");
+var assemblyInfoPath = Argument("assemblyInfoPath", $"{sourceDir}/AssemblyInfo.cs");
+var licenseclientKeyFile = Argument("licenseclientKeyFile", $"{sourceDir}/uop.acs.licenseclient.key");
 
 var msiPath = new DirectoryPath("./artifact");
 var msiFullPath = new FilePath($"./GitSemVersioning.Setup/bin/{configuration}/GitSemVersioning.msi");
