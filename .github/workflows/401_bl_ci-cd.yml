@@ -38,7 +38,15 @@ jobs:
     - name: Reset build agent
       run: dotnet build-server shutdown
     - name: Restore CICD Tools
-      run: dotnet tool restore      
+      run: dotnet tool restore  
+    - name: Mark workspace as safe for Git
+      run: |
+        # 1. Manually add standard Git locations to the active environment path
+        $env:Path += ";C:\Program Files\Git\cmd;C:\Program Files\Git\bin"
+        
+        # 2. Run your Git configuration command
+        git config --global --add safe.directory "*"
+      shell: powershell # 👈 Make sure to specify powershell          
     - name: Build, Tests and Tag
       working-directory: ${{ github.workspace }}
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }} --githubRunAttempt=${{ github.run_attempt }}
