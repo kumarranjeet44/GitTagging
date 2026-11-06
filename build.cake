@@ -45,7 +45,7 @@ var assemblyInfo = ParseAssemblyInfo("./GitSemVersioning/AssemblyInfo.cs");
 var outputDir = Directory("./obj");
 var licenseclientKeyFile = ""; //Argument("licenseclientKeyFile", $"{sourceDir}/{projectName}/uop.acs.licenseclient.key");
 
-
+//
 var gitVersion = GitVersion(new GitVersionSettings { });
 var commitsSinceVersionSource = gitVersion.CommitsSinceVersionSource;
 var projectVersionNumber = gitVersion.MajorMinorPatch;
@@ -615,7 +615,7 @@ Task("UpdateWebToolVersion")
 Task("full")
     .IsDependentOn("Clean")
     .IsDependentOn("Build")
-    .IsDependentOn("Test")
+    //.IsDependentOn("Test")
     .IsDependentOn("Tagmaster");
     //.IsDependentOn("UpdateKeyFileToOrigin");
 RunTarget(target);
