@@ -624,5 +624,6 @@ public (string branchLabel, string assemblyVersion) SetBranchLabelAndVersion(Git
 Task("Full")
     .IsDependentOn("Clean")
     .IsDependentOn("Setaisenvironment")
-    .IsDependentOn("Build");
+    .IsDependentOn("Build")
+    .IsDependentOn("Tagmaster");
 RunTarget(target);
