@@ -15,7 +15,7 @@ env:
   #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
   DEV_CYCLE_BASE_RUN_NUMBER: 235
   enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory..
-# Azure and ACS configuration....
+# Azure and ACS configuration
 
   AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
   AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
@@ -42,3 +42,24 @@ jobs:
       run: dotnet tool restore      
     - name: Build, Tests and Tag
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }}  --enableDevMSI=${{ env.enableDevMSI }} --githubRunAttempt=${{ github.run_attempt }}
+
+  tagged-release:
+    name: Tagged Release
+    runs-on: self-hosted
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & test
+        run: echo "done!"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          files: |
+            LICENSE.txt
+            *.jar
