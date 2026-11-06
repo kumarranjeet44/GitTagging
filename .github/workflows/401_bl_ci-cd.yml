@@ -2,9 +2,6 @@ name: 401_exchanger/401_bl_ci-cd
 on:
   push:
 env:
-  NUGET_API_PASSWORD: "${{ secrets.NUGET_API_PASSWORD }}"
-  NUGET_SOURCEURL_STABLE: https://artifactory-na.honeywell.com/artifactory/api/nuget/uop-msd-nuget-stable-local
-  NUGET_SOURCEURL_UNSTABLE: https://artifactory-na.honeywell.com/artifactory/api/nuget/uop-msd-nuget-unstable-local
   MSBUILD: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe"'
   Nuget: '"C:\GithubAction\NuGet.exe"'
   VSCodeCoverage: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Team Tools\Dynamic Code Coverage Tools\CodeCoverage.exe"'
@@ -14,11 +11,11 @@ env:
   proj_build_temp: Publish
   vstest: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\TestAgent\Common7\IDE\Extensions\TestPlatform\vstest.console.exe"'
   gitusername: kumarranjeet44
-  gituserpassword: "${{ secrets.GIT_PAT  }}"
+  gituserpassword: "Git@2027"
   #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
   DEV_CYCLE_BASE_RUN_NUMBER: 235
-  enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory
-# Azure and ACS configuration
+  enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory..
+# Azure and ACS configuration....
   AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
   AZURE_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
   AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
@@ -41,6 +38,6 @@ jobs:
     - name: Reset build agent
       run: dotnet build-server shutdown
     - name: Restore CICD Tools
-      run: dotnet tool restore         
+      run: dotnet tool restore      
     - name: Build, Tests and Tag
-      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }} --githubRunAttempt=${{ github.run_attempt }}
+      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }}  --enableDevMSI=${{ env.enableDevMSI }} --githubRunAttempt=${{ github.run_attempt }}
