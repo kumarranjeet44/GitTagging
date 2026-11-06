@@ -40,13 +40,7 @@ using System.Windows;
 //      Minor Version 
 //      Build Number
 //      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("4.5.0.2")]
 
-// Below parameter will get updated and be in proper sync with MSI version and Git Tag only if we run UpdateAssemblyBackToOrigin Task in build.cake file
-// It currently without running UpdateAssemblyBackToOrigin Task, GitTagversion, Github App version and MSI version will be in proper sync
 [assembly: AssemblyVersion("8.3.0.12")]
 [assembly: AssemblyFileVersion("8.3.0.12")]
 [assembly: AssemblyInformationalVersion("8.3.0-alpha.12")]
