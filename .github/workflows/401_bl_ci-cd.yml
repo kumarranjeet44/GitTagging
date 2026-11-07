@@ -29,6 +29,8 @@ jobs:
   Build-401-BL-Continuous-Integration:
     runs-on: self-hosted
     if: true # set if condition to false to skip the current job
+    permissions:
+      contents: write
     defaults:
       run:
         shell: cmd
@@ -42,6 +44,7 @@ jobs:
     - name: Restore CICD Tools
       run: dotnet tool restore      
     - name: Build, Tests and Tag
+      id: build
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }}  --enableDevMSI=${{ env.enableDevMSI }} --githubRunAttempt=${{ github.run_attempt }}
     - name: Upload MSI artifact
       uses: actions/upload-artifact@v4
@@ -49,24 +52,30 @@ jobs:
         name: GitSemVersioning-MSI
         path: artifact/*.msi
         if-no-files-found: error
+    - name: Create Release with GitHub CLI
+      if: steps.build.outputs.release_tag != ''
+      shell: pwsh
+      run: |
+        $msiFiles = @(Get-ChildItem -Path artifact -Filter 'GitSemVersioning.Setup.*.msi' -File | ForEach-Object { $_.FullName })
+        if ($msiFiles.Count -eq 0) {
+          throw "No MSI found in the artifact directory."
+        }
 
-  tagged-release:
-    name: Tagged Release
-    runs-on: self-hosted
-    if: startsWith(github.ref, 'refs/tags/')
-    permissions:
-      contents: write
+        $releaseArguments = @("release", "create", $env:RELEASE_TAG) + $msiFiles + @("--title", $env:RELEASE_TITLE)
+        if ([string]::IsNullOrWhiteSpace($env:RELEASE_NOTES)) {
+          $releaseArguments += "--generate-notes"
+        } else {
+          $notesFile = Join-Path $env:RUNNER_TEMP "release-notes.md"
+          [System.IO.File]::WriteAllText($notesFile, $env:RELEASE_NOTES)
+          $releaseArguments += @("--notes-file", $notesFile)
+        }
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build & test
-        run: echo "done!"
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: false
-          files: |
-            LICENSE.txt
-            *.jar
+        & gh @releaseArguments
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_TAG: ${{ steps.build.outputs.release_tag }}
+        RELEASE_TITLE: ${{ steps.build.outputs.release_title }}
+        RELEASE_NOTES: ${{ steps.build.outputs.release_notes }}
