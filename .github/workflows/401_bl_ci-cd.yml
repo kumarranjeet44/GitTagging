@@ -55,7 +55,7 @@ jobs:
         if-no-files-found: error
     - name: Create Release with GitHub CLI
       if: steps.build.outputs.release_tag != ''
-      shell: pwsh
+      shell: powershell
       run: |
         $msiFiles = @(Get-ChildItem -Path artifact -Filter 'GitSemVersioning.Setup.*.msi' -File | ForEach-Object { $_.FullName })
         if ($msiFiles.Count -eq 0) {
