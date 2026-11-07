@@ -65,7 +65,7 @@ jobs:
           echo No MSI found in the artifact directory.
           exit /b 1
         )
-        gh release create "%RELEASE_TAG%" "%MSI_FILE%" --title "%RELEASE_TITLE%" --notes-file artifact\release-notes.md
+        gh release create "%RELEASE_TAG%" "%MSI_FILE%" --title "%RELEASE_TITLE%" --generate-notes
         if errorlevel 1 exit /b 1
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
