@@ -318,29 +318,29 @@ Task("Tagmaster").Does(() =>
     if (gitVersion.BranchName == "master")
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}";
-        releaseTitle = $"GitTagging Production release v{branchTag}";
+        releaseTitle = $"GitTagging Production release {branchTag}";
     }
     else if (enableDevTag && gitVersion.BranchName == "develop")
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}-alpha.{gitVersion.CommitsSinceVersionSource}-{tagSuffix}";
-        releaseTitle = $"GitTagging Alpha release v{branchTag}";
+        releaseTitle = $"GitTagging Alpha release {branchTag}";
     }
     else if (!enableDevTag && (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")))
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}-beta.{gitVersion.CommitsSinceVersionSource}-{tagSuffix}";
-        releaseTitle = $"GitTagging Beta release v{branchTag}";
+        releaseTitle = $"GitTagging Beta release {branchTag}";
     }
     else if (enableDevTag && (gitVersion.BranchName.StartsWith("feature/") || gitVersion.BranchName.StartsWith("bugfix/")))
     {
         if (gitVersion.BranchName.StartsWith("bugfix/"))
         {
             branchTag = $"v{gitVersion.MajorMinorPatch}-bugfix.{gitVersion.CommitsSinceVersionSource}-{tagSuffix}";
-            releaseTitle = $"GitTagging Bugfix release v{branchTag}";
+            releaseTitle = $"GitTagging Bugfix release {branchTag}";
         }
         else
         {
             branchTag = $"v{gitVersion.MajorMinorPatch}-feature.{gitVersion.CommitsSinceVersionSource}-{tagSuffix}";
-            releaseTitle = $"GitTagging Feature release v{branchTag}";
+            releaseTitle = $"GitTagging Feature release {branchTag}";
         }
     }
     else
