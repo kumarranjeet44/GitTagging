@@ -69,8 +69,6 @@ Information($"Complete Assembly Version: {completeAssemblyVersion}");
 Task("Clean").Does(() =>
 {
     CleanDirectories("./artifact");
-    CleanDirectories("**/bin/" + configuration);
-    CleanDirectories("**/bin/" + configuration);
 });
 
 Task("Restore").Does(() =>
