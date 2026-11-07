@@ -16,6 +16,7 @@ env:
   #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
   DEV_CYCLE_BASE_RUN_NUMBER: 235
   enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory..
+  enableDevTag: true # default value is false, can be set to true to enable development tagging
 # Azure and ACS configuration....
 
   AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
@@ -26,9 +27,11 @@ env:
 
 
 jobs:
-  Build-401-BL-Continuous-Integration:
+  GitSemVersioning-Continuous-Integration:
     runs-on: self-hosted
     if: true # set if condition to false to skip the current job
+    permissions:
+      contents: write
     defaults:
       run:
         shell: cmd
@@ -42,31 +45,28 @@ jobs:
     - name: Restore CICD Tools
       run: dotnet tool restore      
     - name: Build, Tests and Tag
-      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }}  --enableDevMSI=${{ env.enableDevMSI }} --githubRunAttempt=${{ github.run_attempt }}
+      id: build
+      run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }}  --enableDevMSI=${{ env.enableDevMSI }} --enableDevTag=${{ env.enableDevTag }} --githubRunAttempt=${{ github.run_attempt }}
     - name: Upload MSI artifact
       uses: actions/upload-artifact@v4
       with:
         name: GitSemVersioning-MSI
         path: artifact/*.msi
         if-no-files-found: error
-
-  tagged-release:
-    name: Tagged Release
-    runs-on: self-hosted
-    if: startsWith(github.ref, 'refs/tags/')
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build & test
-        run: echo "done!"
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: false
-          files: |
-            LICENSE.txt
-            *.jar
+    - name: Create Release with GitHub CLI
+      if: steps.build.outputs.release_tag != ''
+      shell: cmd
+      run: |
+        @echo off
+        set "MSI_FILE="
+        for %%F in (artifact\GitSemVersioning.Setup.*.msi) do if exist "%%~fF" set "MSI_FILE=%%~fF"
+        if not defined MSI_FILE (
+          echo No MSI found in the artifact directory.
+          exit /b 1
+        )
+        gh release create "%RELEASE_TAG%" "%MSI_FILE%" --title "%RELEASE_TITLE%" --generate-notes
+        if errorlevel 1 exit /b 1
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_TAG: ${{ steps.build.outputs.release_tag }}
+        RELEASE_TITLE: ${{ steps.build.outputs.release_title }}
