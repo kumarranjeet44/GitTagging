@@ -27,7 +27,7 @@ env:
 
 
 jobs:
-  Build-401-BL-Continuous-Integration:
+  GitSemVersioning-Continuous-Integration:
     runs-on: self-hosted
     if: true # set if condition to false to skip the current job
     permissions:
