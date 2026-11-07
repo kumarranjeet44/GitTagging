@@ -55,28 +55,18 @@ jobs:
         if-no-files-found: error
     - name: Create Release with GitHub CLI
       if: steps.build.outputs.release_tag != ''
-      shell: powershell
+      shell: cmd
       run: |
-        $msiFiles = @(Get-ChildItem -Path artifact -Filter 'GitSemVersioning.Setup.*.msi' -File | ForEach-Object { $_.FullName })
-        if ($msiFiles.Count -eq 0) {
-          throw "No MSI found in the artifact directory."
-        }
-
-        $releaseArguments = @("release", "create", $env:RELEASE_TAG) + $msiFiles + @("--title", $env:RELEASE_TITLE)
-        if ([string]::IsNullOrWhiteSpace($env:RELEASE_NOTES)) {
-          $releaseArguments += "--generate-notes"
-        } else {
-          $notesFile = Join-Path $env:RUNNER_TEMP "release-notes.md"
-          [System.IO.File]::WriteAllText($notesFile, $env:RELEASE_NOTES)
-          $releaseArguments += @("--notes-file", $notesFile)
-        }
-
-        & gh @releaseArguments
-        if ($LASTEXITCODE -ne 0) {
-          exit $LASTEXITCODE
-        }
+        @echo off
+        set "MSI_FILE="
+        for %%F in (artifact\GitSemVersioning.Setup.*.msi) do if exist "%%~fF" set "MSI_FILE=%%~fF"
+        if not defined MSI_FILE (
+          echo No MSI found in the artifact directory.
+          exit /b 1
+        )
+        gh release create "%RELEASE_TAG%" "%MSI_FILE%" --title "%RELEASE_TITLE%" --generate-notes
+        if errorlevel 1 exit /b 1
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_TAG: ${{ steps.build.outputs.release_tag }}
         RELEASE_TITLE: ${{ steps.build.outputs.release_title }}
-        RELEASE_NOTES: ${{ steps.build.outputs.release_notes }}
