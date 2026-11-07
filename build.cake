@@ -318,7 +318,7 @@ Task("Tagmaster").Does(() =>
     if (gitVersion.BranchName == "master")
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}";
-        releaseTitle = $"GitTagging Stable release v{gitVersion.MajorMinorPatch}";
+        releaseTitle = $"GitTagging Production release v{gitVersion.MajorMinorPatch}";
     }
     else if (enableDevTag && gitVersion.BranchName == "develop")
     {
