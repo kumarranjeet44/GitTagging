@@ -408,24 +408,13 @@ Task("Tagmaster").Does(() =>
         Information("Could not extract git logs for changelog parsing: " + ex.Message);
     }
 
-    // 2. Build release notes from the workflow note and Jira links
+    // 2. Format ticket keys into click-ready absolute hyperlinks
     var bodyBuilder = new StringBuilder();
-    bodyBuilder.AppendLine("## What's Changed");
-    var releaseNote = EnvironmentVariable("release_note");
-    if (!string.IsNullOrWhiteSpace(releaseNote))
-    {
-        bodyBuilder.AppendLine(releaseNote.Trim());
-    }
-    if (jiraKeys.Count > 0)
-    {
-        bodyBuilder.AppendLine();
-    }
     foreach(var key in jiraKeys)
     {
         bodyBuilder.AppendLine($"https://honeywell.atlassian.net/browse/{key}");
     }
     string compiledNotes = bodyBuilder.ToString().Trim();
-    System.IO.File.WriteAllText("artifact/release-notes.md", compiledNotes, Encoding.UTF8);
 
     // 3. Pipe compiled values safely out to GITHUB_OUTPUT (Respects your zero-commit security block)
     var githubOutputFile = EnvironmentVariable("GITHUB_OUTPUT");
