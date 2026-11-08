@@ -17,7 +17,6 @@ env:
   DEV_CYCLE_BASE_RUN_NUMBER: 235
   enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory..
   enableDevTag: true # default value is false, can be set to true to enable development tagging
-  release_note: "Includes the GitSemVersioning Windows desktop installer."
 # Azure and ACS configuration.......
 
   AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
@@ -65,7 +64,7 @@ jobs:
           echo No MSI found in the artifact directory.
           exit /b 1
         )
-        gh release create "%RELEASE_TAG%" "%MSI_FILE%" --title "%RELEASE_TITLE%" --notes-file artifact\release-notes.md
+        gh release create "%RELEASE_TAG%" "%MSI_FILE%" --title "%RELEASE_TITLE%" --generate-notes
         if errorlevel 1 exit /b 1
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
