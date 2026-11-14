@@ -15,8 +15,8 @@ env:
   gituserpassword: "Git@2027"
   #DEV_CYCLE_BASE_RUN_NUMBER: "${{ secrets.DEV_CYCLE_BASE_RUN_NUMBER }}"
   DEV_CYCLE_BASE_RUN_NUMBER: 235
-  enableDevMSI: true # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory..
-  enableDevTag: true # default value is false, can be set to true to enable development tagging
+  enableDevMSI: false # default value is false, can be set to true to generate MSI for feature/bugfix branches and push to Artifactory..
+  enableDevTag: false # default value is false, can be set to true to enable development tagging
 # Azure and ACS configuration.......
 
   AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
@@ -47,26 +47,17 @@ jobs:
     - name: Build, Tests and Tag
       id: build
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }}  --enableDevMSI=${{ env.enableDevMSI }} --enableDevTag=${{ env.enableDevTag }} --githubRunAttempt=${{ github.run_attempt }}
-    - name: Upload MSI artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: GitSemVersioning-MSI
-        path: artifact/*.msi
-        if-no-files-found: error
-    - name: Create Release with GitHub CLI
+    # - name: Upload MSI artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: GitSemVersioning-MSI
+    #     path: artifact/*.msi
+    #     if-no-files-found: error
+    - name: Create Release
       if: steps.build.outputs.release_tag != ''
-      shell: cmd
-      run: |
-        @echo off
-        set "MSI_FILE="
-        for %%F in (artifact\GitSemVersioning.Setup.*.msi) do if exist "%%~fF" set "MSI_FILE=%%~fF"
-        if not defined MSI_FILE (
-          echo No MSI found in the artifact directory.
-          exit /b 1
-        )
-        gh release create "%RELEASE_TAG%" "%MSI_FILE%" --title "%RELEASE_TITLE%" --generate-notes
-        if errorlevel 1 exit /b 1
+      run: dotnet cake --do=CreateRelease --githubRunNumber=${{ github.run_number }} --verbosity=diagnostic
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_TAG: ${{ steps.build.outputs.release_tag }}
         RELEASE_TITLE: ${{ steps.build.outputs.release_title }}
+        RELEASE_NOTES: ${{ steps.build.outputs.release_notes }}
