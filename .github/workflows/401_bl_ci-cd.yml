@@ -47,12 +47,12 @@ jobs:
     - name: Build, Tests and Tag
       id: build
       run: dotnet cake --do=full --gitusername=${{ env.gitusername }} --gituserpassword=${{ env.gituserpassword }} --githubRunNumber=${{ github.run_number }}  --enableDevMSI=${{ env.enableDevMSI }} --enableDevTag=${{ env.enableDevTag }} --githubRunAttempt=${{ github.run_attempt }}
-    - name: Upload MSI artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: GitSemVersioning-MSI
-        path: artifact/*.msi
-        if-no-files-found: error
+    # - name: Upload MSI artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: GitSemVersioning-MSI
+    #     path: artifact/*.msi
+    #     if-no-files-found: error
     - name: Create Release
       if: steps.build.outputs.release_tag != ''
       run: dotnet cake --do=CreateRelease --githubRunNumber=${{ github.run_number }} --verbosity=diagnostic
