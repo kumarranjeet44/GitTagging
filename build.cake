@@ -325,7 +325,7 @@ Task("Tagmaster").Does(() =>
         branchTag = $"v{gitVersion.MajorMinorPatch}-alpha.{gitVersion.CommitsSinceVersionSource}-{tagSuffix}";
         releaseTitle = $"GitTagging Alpha release {branchTag}";
     }
-    else if (!enableDevTag && (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/")))
+    else if (gitVersion.BranchName.StartsWith("release/") || gitVersion.BranchName.StartsWith("hotfix/"))
     {
         branchTag = $"v{gitVersion.MajorMinorPatch}-beta.{gitVersion.CommitsSinceVersionSource}-{tagSuffix}";
         releaseTitle = $"GitTagging Beta release {branchTag}";
