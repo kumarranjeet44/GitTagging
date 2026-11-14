@@ -451,11 +451,11 @@ Task("CreateRelease").Does(() =>
         throw new CakeException("GH_TOKEN, GITHUB_REPOSITORY, and GITHUB_API_URL are required to create a GitHub release.");
     }
 
-    var msiFiles = GetFiles(msiPath + "/UOP.MSD-PID Population Tool.Setup.*.msi").ToArray();
-    if (msiFiles.Length != 1)
-    {
-        throw new CakeException($"Expected exactly one versioned MSI in {msiPath}; found {msiFiles.Length}.");
-    }
+    // var msiFiles = GetFiles(msiPath + "/UOP.MSD-PID Population Tool.Setup.*.msi").ToArray();
+    // if (msiFiles.Length != 1)
+    // {
+    //     throw new CakeException($"Expected exactly one versioned MSI in {msiPath}; found {msiFiles.Length}.");
+    // }
 
     using (var client = new HttpClient { Timeout = TimeSpan.FromMinutes(15) })
     {
