@@ -451,12 +451,6 @@ Task("CreateRelease").Does(() =>
         throw new CakeException("GH_TOKEN, GITHUB_REPOSITORY, and GITHUB_API_URL are required to create a GitHub release.");
     }
 
-    // var msiFiles = GetFiles(msiPath + "/UOP.MSD-PID Population Tool.Setup.*.msi").ToArray();
-    // if (msiFiles.Length != 1)
-    // {
-    //     throw new CakeException($"Expected exactly one versioned MSI in {msiPath}; found {msiFiles.Length}.");
-    // }
-
     using (var client = new HttpClient { Timeout = TimeSpan.FromMinutes(15) })
     {
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -480,25 +474,9 @@ Task("CreateRelease").Does(() =>
                 throw new CakeException($"GitHub release creation failed ({response.StatusCode}): {responseBody}");
             }
 
-            var release = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseBody);
-            var uploadUrl = release["upload_url"].ToString().Split('{')[0];
-            using (var stream = System.IO.File.OpenRead(msiFiles[0].FullPath))
-            using (var asset = new StreamContent(stream))
-            {
-                asset.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                var assetUrl = uploadUrl + "?name=" + Uri.EscapeDataString(msiFiles[0].GetFilename().ToString());
-                using (var uploadResponse = client.PostAsync(assetUrl, asset).GetAwaiter().GetResult())
-                {
-                    var uploadBody = uploadResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                    if (!uploadResponse.IsSuccessStatusCode)
-                    {
-                        throw new CakeException($"GitHub release asset upload failed ({uploadResponse.StatusCode}): {uploadBody}");
-                    }
-                }
-            }
         }
     }
-    Information($"Created GitHub release {releaseTag} with MSI asset.");
+    Information($"Created GitHub release {releaseTag}.");
 });
 
 
