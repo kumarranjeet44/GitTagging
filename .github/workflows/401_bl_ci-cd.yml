@@ -53,20 +53,11 @@ jobs:
         name: GitSemVersioning-MSI
         path: artifact/*.msi
         if-no-files-found: error
-    - name: Create Release with GitHub CLI
+    - name: Create Release
       if: steps.build.outputs.release_tag != ''
-      shell: cmd
-      run: |
-        @echo off
-        set "MSI_FILE="
-        for %%F in (artifact\GitSemVersioning.Setup.*.msi) do if exist "%%~fF" set "MSI_FILE=%%~fF"
-        if not defined MSI_FILE (
-          echo No MSI found in the artifact directory.
-          exit /b 1
-        )
-        gh release create "%RELEASE_TAG%" "%MSI_FILE%" --title "%RELEASE_TITLE%" --generate-notes
-        if errorlevel 1 exit /b 1
+      run: dotnet cake --do=CreateRelease --githubRunNumber=${{ github.run_number }} --verbosity=diagnostic
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_TAG: ${{ steps.build.outputs.release_tag }}
         RELEASE_TITLE: ${{ steps.build.outputs.release_title }}
+        RELEASE_NOTES: ${{ steps.build.outputs.release_notes }}
