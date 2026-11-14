@@ -433,6 +433,52 @@ Task("Tagmaster").Does(() =>
     }
 });
 
+Task("CreateRelease").Does(() =>
+{
+    var releaseTag = EnvironmentVariable("RELEASE_TAG");
+    var releaseName = EnvironmentVariable("RELEASE_TITLE");
+    var releaseNotes = EnvironmentVariable("RELEASE_NOTES") ?? "";
+    if (string.IsNullOrWhiteSpace(releaseTag) || string.IsNullOrWhiteSpace(releaseName))
+    {
+        throw new CakeException("RELEASE_TAG and RELEASE_TITLE are required to create a GitHub release.");
+    }
+
+    var token = EnvironmentVariable("GH_TOKEN");
+    var repository = EnvironmentVariable("GITHUB_REPOSITORY");
+    var apiUrl = EnvironmentVariable("GITHUB_API_URL");
+    if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(repository) || string.IsNullOrWhiteSpace(apiUrl))
+    {
+        throw new CakeException("GH_TOKEN, GITHUB_REPOSITORY, and GITHUB_API_URL are required to create a GitHub release.");
+    }
+
+    using (var client = new HttpClient { Timeout = TimeSpan.FromMinutes(15) })
+    {
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("uop-msd-build");
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+
+        var releaseData = JsonConvert.SerializeObject(new
+        {
+            tag_name = releaseTag,
+            name = releaseName,
+            body = $"{releaseName}  \nList of tickets released in this build are:  \n{(string.IsNullOrWhiteSpace(releaseNotes) ? "No Jira IDs found in commit messages." : releaseNotes)}",
+            generate_release_notes = false,
+            prerelease = gitVersion.BranchName != "master"
+        });
+        using (var content = new StringContent(releaseData, Encoding.UTF8, "application/json"))
+        using (var response = client.PostAsync($"{apiUrl.TrimEnd('/')}/repos/{repository}/releases", content).GetAwaiter().GetResult())
+        {
+            var responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new CakeException($"GitHub release creation failed ({response.StatusCode}): {responseBody}");
+            }
+
+        }
+    }
+    Information($"Created GitHub release {releaseTag}.");
+});
+
 
 Task("UpdateAssemblyFileBackToOrigin")
    .Does(() =>
