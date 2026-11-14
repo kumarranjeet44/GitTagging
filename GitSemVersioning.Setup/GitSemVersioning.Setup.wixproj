@@ -3,7 +3,7 @@
     <OutputName>GitSemVersioning</OutputName>
     <InstallerPlatform>x64</InstallerPlatform>
     <SuppressValidation>true</SuppressValidation>
-    <DefaultCompressionLevel>high</DefaultCompressionLevel>
+    <DefaultCompressionLevel>none</DefaultCompressionLevel>
     <PublishDir>$(MSBuildProjectDirectory)\..\artifact\publish\</PublishDir>
     <DefineConstants>PublishDir=$(PublishDir);ProductVersion=$(ProductVersion)</DefineConstants>
   </PropertyGroup>
