@@ -295,7 +295,7 @@ Task("Tagmaster").Does(() =>
         throw new Exception($"Build failed: Multiple release branches found. Please consolidate to a single release branch.");
     }
 
-    //ADDED OR RE-CONFIGURED FEATURE CONDITION GATE FOR TESTING
+    //ADDED OR RE-CONFIGURED FEATURE CONDITION GATE FOR TESTING...
     if (!enableDevTag && (gitVersion.BranchName.StartsWith("feature/") || gitVersion.BranchName.StartsWith("bugfix/") || gitVersion.BranchName == "develop"))
     {
         Information($"Building in feature/bugfix/develop/release/hotfix branch and  enableDevTag is {enableDevTag}, will skip Tagging.");
