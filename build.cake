@@ -386,7 +386,7 @@ Task("Tagmaster").Does(() =>
     }
 
     // =========================================================================
-    // --- NEW INJECTED RELEASE COMPILATION WORK (ZERO DUPLICATION) -----
+    // --- NEW INJECTED RELEASE COMPILATION WORK (ZERO DUPLICATION) -------
     // =========================================================================
 
     // 1. Scan git commit history to capture Jira keys (e.g. UOPMSD-845)
