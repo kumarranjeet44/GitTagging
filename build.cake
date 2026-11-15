@@ -391,22 +391,38 @@ Task("Tagmaster").Does(() =>
 
     // 1. Scan git commit history to capture Jira keys (e.g. UOPMSD-845)
     var jiraKeys = new HashSet<string>();
-    try 
+    var arguments = new ProcessArgumentBuilder()
+        .Append("log")
+        .Append("--format=%B")
+        .AppendQuoted($"refs/tags/{branchTag}");
+    // Exclude shipped history, not prereleases or the current tag on a rerun.
+    foreach (var tag in currentTags.Where(t => t.FriendlyName != branchTag &&
+        Regex.IsMatch(t.FriendlyName, @"^v\d+\.\d+\.\d+$")))
     {
-        var commits = GitLog(".", 50); // Scans the last 50 commits
-        var regex = new Regex(@"UOPMSD-\d+", RegexOptions.IgnoreCase);
-        foreach(var c in commits)
-        {
-            var matches = regex.Matches(c.Message);
-            foreach(Match m in matches)
-            {
-                jiraKeys.Add(m.Value.ToUpper());
-            }
-        }
+        arguments.AppendQuoted($"^refs/tags/{tag.FriendlyName}");
     }
-    catch(Exception ex)
+    arguments.Append("--");
+
+    IEnumerable<string> output;
+    IEnumerable<string> errors;
+    var exitCode = StartProcess("git", new ProcessSettings
     {
-        Information("Could not extract git logs for changelog parsing: " + ex.Message);
+        Arguments = arguments,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true
+    }, out output, out errors);
+    if (exitCode != 0)
+    {
+        throw new CakeException($"Could not extract release commits: {string.Join(Environment.NewLine, errors)}");
+    }
+    var regex = new Regex(@"UOPMSD-\d+", RegexOptions.IgnoreCase);
+    foreach(var message in output)
+    {
+        var matches = regex.Matches(message);
+        foreach(Match m in matches)
+        {
+            jiraKeys.Add(m.Value.ToUpper());
+        }
     }
 
     // 2. Format ticket keys into click-ready absolute hyperlinks
