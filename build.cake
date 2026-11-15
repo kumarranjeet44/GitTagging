@@ -268,6 +268,7 @@ Task("Tagmaster").Does(() =>
     //Sanity check
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
     Information($"enableDevTag: {enableDevTag}");
+    Information($"enableDevMSI: {enableDevMSI}");
     Information($"Calculated tagSuffix for tagging on Multiple releases, hotfix, bugfix and feature: {tagSuffix}");
 
     var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
