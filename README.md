@@ -12,5 +12,7 @@ production, even when those tickets appeared in an earlier prerelease.
 
 The workflow must fetch full history and tags (`fetch-depth: 0`). Git failures
 stop note generation rather than publishing an incomplete ticket list.
-Keys are deduplicated within the release; a previously released key mentioned
-again in a new commit can still appear.
+Keys are deduplicated within the release. Keys found in other production tags'
+commit history are also removed, so hotfix back-merges, cherry-picks, and repeated
+mentions do not list already-shipped tickets again. Reusing an already-shipped
+Jira key for new work will therefore not add it to subsequent release notes.
