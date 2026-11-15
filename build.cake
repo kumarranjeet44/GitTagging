@@ -393,18 +393,50 @@ Task("Tagmaster").Does(() =>
     var jiraKeys = new HashSet<string>();
     try 
     {
-        var commits = GitLog(".", 50); // Scans the last 50 commits
-        var regex = new Regex(@"UOPMSD-\d+", RegexOptions.IgnoreCase);
-        foreach(var c in commits)
+        IEnumerable<string> commitMessages;
+        if (gitVersion.BranchName == "master")
         {
-            var matches = regex.Matches(c.Message);
+            var arguments = new ProcessArgumentBuilder()
+                .Append("log")
+                .Append("--format=%B")
+                .AppendQuoted($"refs/tags/{branchTag}");
+            // Exclude released history, but not the current tag (which may already exist on a rerun).
+            foreach (var tag in currentTags.Where(t => t.FriendlyName != branchTag &&
+                Regex.IsMatch(t.FriendlyName, @"^v\d+\.\d+\.\d+$")))
+            {
+                arguments.AppendQuoted($"^refs/tags/{tag.FriendlyName}");
+            }
+            arguments.Append("--");
+
+            IEnumerable<string> output;
+            IEnumerable<string> errors;
+            var exitCode = StartProcess("git", new ProcessSettings
+            {
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            }, out output, out errors);
+            if (exitCode != 0)
+            {
+                throw new CakeException($"Could not extract production release commits: {string.Join(Environment.NewLine, errors)}");
+            }
+            commitMessages = output;
+        }
+        else
+        {
+            commitMessages = GitLog(".", 50).Select(c => c.Message);
+        }
+        var regex = new Regex(@"UOPMSD-\d+", RegexOptions.IgnoreCase);
+        foreach(var message in commitMessages)
+        {
+            var matches = regex.Matches(message);
             foreach(Match m in matches)
             {
                 jiraKeys.Add(m.Value.ToUpper());
             }
         }
     }
-    catch(Exception ex)
+    catch(Exception ex) when (gitVersion.BranchName != "master")
     {
         Information("Could not extract git logs for changelog parsing: " + ex.Message);
     }
