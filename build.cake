@@ -390,39 +390,29 @@ Task("Tagmaster").Does(() =>
     // =========================================================================
 
     // 1. Scan git commit history to capture Jira keys (e.g. UOPMSD-845)
-    var jiraKeys = new HashSet<string>();
+    var productionTags = currentTags.Where(t => t.FriendlyName != branchTag &&
+        Regex.IsMatch(t.FriendlyName, @"^v\d+\.\d+\.\d+$")).ToList();
     var arguments = new ProcessArgumentBuilder()
         .Append("log")
         .Append("--format=%B")
         .AppendQuoted($"refs/tags/{branchTag}");
+    var releasedArguments = new ProcessArgumentBuilder()
+        .Append("log")
+        .Append("--format=%B");
     // Exclude shipped history, not prereleases or the current tag on a rerun.
-    foreach (var tag in currentTags.Where(t => t.FriendlyName != branchTag &&
-        Regex.IsMatch(t.FriendlyName, @"^v\d+\.\d+\.\d+$")))
+    foreach (var tag in productionTags)
     {
         arguments.AppendQuoted($"^refs/tags/{tag.FriendlyName}");
+        releasedArguments.AppendQuoted($"refs/tags/{tag.FriendlyName}");
     }
     arguments.Append("--");
+    releasedArguments.Append("--");
 
-    IEnumerable<string> output;
-    IEnumerable<string> errors;
-    var exitCode = StartProcess("git", new ProcessSettings
+    var jiraKeys = GetJiraKeysFromGitLog(arguments);
+    if (productionTags.Any())
     {
-        Arguments = arguments,
-        RedirectStandardOutput = true,
-        RedirectStandardError = true
-    }, out output, out errors);
-    if (exitCode != 0)
-    {
-        throw new CakeException($"Could not extract release commits: {string.Join(Environment.NewLine, errors)}");
-    }
-    var regex = new Regex(@"UOPMSD-\d+", RegexOptions.IgnoreCase);
-    foreach(var message in output)
-    {
-        var matches = regex.Matches(message);
-        foreach(Match m in matches)
-        {
-            jiraKeys.Add(m.Value.ToUpper());
-        }
+        // Back-merges and cherry-picks can mention shipped tickets in new commits.
+        jiraKeys.ExceptWith(GetJiraKeysFromGitLog(releasedArguments));
     }
 
     // 2. Format ticket keys into click-ready absolute hyperlinks
@@ -589,6 +579,33 @@ Task("Setaisenvironment").Does(() =>
     Information("Building in develop/feature/bugfix branch, aisclient.config AIS_ENVIRONMENT variable value is DEV");
 });
 
+
+HashSet<string> GetJiraKeysFromGitLog(ProcessArgumentBuilder arguments)
+{
+    IEnumerable<string> output;
+    IEnumerable<string> errors;
+    var exitCode = StartProcess("git", new ProcessSettings
+    {
+        Arguments = arguments,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true
+    }, out output, out errors);
+    if (exitCode != 0)
+    {
+        throw new CakeException($"Could not extract release commits: {string.Join(Environment.NewLine, errors)}");
+    }
+
+    var jiraKeys = new HashSet<string>();
+    var regex = new Regex(@"UOPMSD-\d+", RegexOptions.IgnoreCase);
+    foreach (var message in output)
+    {
+        foreach (Match match in regex.Matches(message))
+        {
+            jiraKeys.Add(match.Value.ToUpper());
+        }
+    }
+    return jiraKeys;
+}
 
 bool IsMajorVersionUpgrade()
 {
