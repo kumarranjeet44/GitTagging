@@ -268,6 +268,7 @@ Task("Tagmaster").Does(() =>
     //Sanity check
     Information("GitVersion object details: {0}", JsonConvert.SerializeObject(gitVersion, Formatting.Indented));
     Information($"enableDevTag: {enableDevTag}");
+    Information($"enableDevMSI: {enableDevMSI}");
     Information($"Calculated tagSuffix for tagging on Multiple releases, hotfix, bugfix and feature: {tagSuffix}");
 
     var isGitHubActions = EnvironmentVariable("GITHUB_ACTIONS") == "true";
@@ -294,7 +295,7 @@ Task("Tagmaster").Does(() =>
         throw new Exception($"Build failed: Multiple release branches found. Please consolidate to a single release branch.");
     }
 
-    // --- ADDED OR RE-CONFIGURED FEATURE CONDITION GATE FOR TESTING ---
+    //ADDED OR RE-CONFIGURED FEATURE CONDITION GATE FOR TESTING...
     if (!enableDevTag && (gitVersion.BranchName.StartsWith("feature/") || gitVersion.BranchName.StartsWith("bugfix/") || gitVersion.BranchName == "develop"))
     {
         Information($"Building in feature/bugfix/develop/release/hotfix branch and  enableDevTag is {enableDevTag}, will skip Tagging.");
